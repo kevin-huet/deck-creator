@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Keyword" ADD COLUMN     "name" TEXT NOT NULL DEFAULT E'',
+ADD COLUMN     "slug" TEXT NOT NULL DEFAULT E'';

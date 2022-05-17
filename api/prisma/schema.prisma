@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        Int             @default(autoincrement()) @id
+  decks                     Deck[]
+  email                     String          @unique
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @default(now())
+  username                  String          @unique
+  password                  String
+  terms                     Boolean         @default(false)
+  verified                  Boolean         @default(false)
+  verificationCode          String          @default("")
+}
+
+model Deck {
+  id                        Int             @default(autoincrement()) @id
+  name                      String
+  author                    User?           @relation(fields: [authorId], references: [id])
+  class                     HsClass?        @relation(fields: [classId], references: [blizzard_id])
+  cards                     CardOnDeck[]
+  authorId Int?
+  classId Int?
+}
+
+model CardOnDeck {
+  id                        Int             @default(autoincrement()) @id
+  deck                      Deck            @relation(fields: [deckId], references: [id])
+  card                      Card            @relation(fields: [cardId], references: [blizzard_id])
+  deckId                    Int
+  cardId                    Int
+}
+
+model Card {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int?            @unique
+  hsClass                   HsClass?        @relation(fields: [hsClassId], references: [blizzard_id])
+  cardType                  CardType?       @relation(fields: [cardTypeId], references: [blizzard_id])
+  minionType                MinionType?     @relation(fields: [minionTypeId], references: [blizzard_id])
+  cardSet                   CardSet?        @relation(fields: [cardSetId], references: [blizzard_id])
+  rarity                    Rarity?         @relation(fields: [rarityId], references: [blizzard_id])
+  spellSchool               SpellSchool?    @relation(fields: [spellSchoolId], references: [blizzard_id])
+  keywordCards              KeywordCard[]
+  decks                     CardOnDeck[]
+  artistName                String?
+  health                    Int?
+  attack                    Int?
+  manaCost                  Int?
+  name                      String?
+  text                      String?
+  image                     String?
+  slug                      String?
+  imageGold                 String?
+  flavorText                String?
+  cropImage                 String?
+  //key
+  cardSetId                 Int?
+  rarityId                  Int?
+  hsClassId                 Int?
+  cardTypeId                Int?
+  minionTypeId              Int?
+  spellSchoolId             Int?
+}
+
+model KeywordCard {
+  id                        Int             @default(autoincrement()) @id
+  keyword                   Keyword         @relation(fields: [keywordId], references: [blizzard_id])
+  card                      Card            @relation(fields: [cardId], references: [blizzard_id])
+  keywordId                 Int
+  cardId                    Int
+}
+
+model Keyword {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String          @default("")
+  slug                      String          @default("")
+  keywordCards              KeywordCard[]
+  text                      String
+  refText                   String
+}
+
+model CardType {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String
+  slug                      String
+  gameModes                 GameModeCardType[]
+  cards                     Card[]
+}
+
+model GameMode {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  slug                      String
+  name                      String
+  cardTypes                 GameModeCardType[]
+  minionTypes               GameModeMinionType[]
+}
+
+model Rarity {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String
+  slug                      String
+  craftingCost              Int[]
+  dustValue                 Int[]
+  cards                     Card[]
+}
+
+model CardSet {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String
+  slug                      String
+  type                      String
+  collectibleCount          Int
+  collectibleRevealedCount  Int
+  nonCollectibleCount       Int
+  nonCollectibleRevealedCount Int
+  cards                     Card[]
+}
+
+model MinionType {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String
+  slug                      String
+  cards                     Card[]
+  gameModes                 GameModeMinionType[]
+}
+
+model GameModeCardType {
+  id                        Int             @default(autoincrement()) @id
+  gamemode                  GameMode        @relation(fields: [gameModeId], references: [blizzard_id])
+  cardType                  CardType        @relation(fields: [cardTypeId], references: [blizzard_id])
+  gameModeId                Int
+  cardTypeId                Int
+}
+
+model GameModeMinionType {
+  id                        Int             @default(autoincrement()) @id
+  gamemode                  GameMode        @relation(fields: [gameModeId], references: [blizzard_id])
+  minionType                MinionType      @relation(fields: [minionTypeId], references: [blizzard_id])
+  gameModeId                Int
+  minionTypeId              Int
+}
+
+model SpellSchool {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String
+  slug                      String
+  cards                     Card[]
+}
+
+model HsClass {
+  id                        Int             @default(autoincrement()) @id
+  blizzard_id               Int             @unique
+  name                      String
+  slug                      String
+  cards                     Card[]
+  decks                     Deck[]
+  powerCardId               Int?
+  heroCardId                Int?
+  alternateHeroCardIds      Int[]
+}
