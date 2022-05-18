@@ -1,0 +1,13 @@
+client/.idea
+client/.nuxt
+client/node_modules
+client/package-lock.json
+client/dist
+
+api/.idea
+api/node_modules
+api/package-lock.json
+api/dist
+api/.env
+
+.idea
