@@ -82,4 +82,11 @@ export class HearthstoneService {
   async getClasses() {
     return this.prisma.hsClass.findMany();
   }
+
+  async getDeckPagination(page: number, nbItem: number) {
+    return this.prisma.deck.findMany({
+      skip: (page === 1) ? 0 : page * nbItem,
+      take: nbItem
+    })
+  }
 }

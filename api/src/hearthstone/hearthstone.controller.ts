@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
+import {Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards} from "@nestjs/common";
 import { HearthstoneService } from "./hearthstone.service";
 import { Deck as DeckModel, Card as CardModel } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -7,18 +7,15 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 export class HearthstoneController {
   constructor(private hsService: HearthstoneService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get('cards')
   async showCards(): Promise<CardModel[]> {
     return this.hsService.getAllCards();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('decks')
-  async showDecks(): Promise<DeckModel[]> {
-    // @ts-ignore
 
-    return this.hsService.getAllDecks();
+  @Get('decks')
+  async showDecksPage(@Query('page') page, @Query('nbItem') nbItem): Promise<DeckModel[]> {
+    return this.hsService.getDeckPagination(parseInt(page), 16);
   }
 
   @Get('deck/:id')
