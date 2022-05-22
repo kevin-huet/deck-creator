@@ -16,3 +16,4 @@ export const mutations = {
     state.logged = false
   }
 }
+

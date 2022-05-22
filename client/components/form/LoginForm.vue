@@ -66,6 +66,7 @@ export default {
           ...form
         },{ withCredentials: true })
         .then(r => {
+          this.$store.commit('auth/login')
           this.$router.push('/')
         })
         .catch(err => {

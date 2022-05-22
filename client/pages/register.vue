@@ -88,6 +88,12 @@ export default {
       email: ''
     }
   }),
+  beforeRouteEnter(to, from, next) {
+    next(vm => {
+      if (vm.$store.state.auth.logged)
+        vm.$router.replace(from.path || from.fullPath)
+    })
+  },
   methods: {
     nextStep () {
       this.e1 = this.e1 + 1

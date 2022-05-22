@@ -44,7 +44,8 @@ export default {
     // Equivalent to { path: '~/components' }
     '~/components',
     { path: '~/components/bar' },
-    { path: '~/components/form' }
+    { path: '~/components/form' },
+    { path: '~/components/hearthstone' }
   ],
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [

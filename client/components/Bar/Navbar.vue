@@ -9,19 +9,13 @@
 
       <v-toolbar-title>Deck Creator</v-toolbar-title>
       <v-toolbar-items class="hidden-sm-and-down ml-6">
-        <v-btn text small to="">
-          Cards
-        </v-btn>
-        <v-btn text small to="">
-          Deck
-        </v-btn>
-        <v-btn text small to="">
-          News
+        <v-btn v-for="item in navLinks" text small :to="item.path">
+          {{ item.name }}
         </v-btn>
       </v-toolbar-items>
       <v-spacer/>
-      <div v-if="this.$cookies.get('Authentication')">
-        <v-btn icon>
+      <div v-if="this.$store.state.auth.logged">
+        <v-btn icon to="/account">
           <v-icon>mdi-account</v-icon>
         </v-btn>
 
@@ -39,21 +33,31 @@
               v-bind="attrs"
               v-on="on"
             >
-              <v-icon>mdi-dots-vertical</v-icon>
+              <v-icon>mdi-account</v-icon>
             </v-btn>
           </template>
 
           <v-list>
             <v-list-item
-              v-for="n in 5"
-              :key="n"
+              v-for="item in accountLinks"
+              :key="item.name"
               @click="() => {}"
             >
-              <v-list-item-title>Option {{ n }}</v-list-item-title>
+              <router-link :to="item.path" style="text-decoration: none; color: inherit">
+                <v-list-item-title>{{ item.name }}</v-list-item-title>
+              </router-link>
             </v-list-item>
           </v-list>
         </v-menu>
       </div>
+      <v-toolbar-items class="hidden-sm-and-down ml-6" v-if="!this.$store.state.auth.logged">
+        <v-btn text small to="/login">
+          Login
+        </v-btn>
+        <v-btn text small to="/register">
+          Register
+        </v-btn>
+      </v-toolbar-items>
     </v-toolbar>
     <v-navigation-drawer
       v-model="drawer"
@@ -75,7 +79,7 @@
             <v-list-item-title>Home</v-list-item-title>
           </v-list-item>
 
-          <v-list-item>
+          <v-list-item to="/account">
             <v-list-item-icon>
               <v-icon>mdi-account</v-icon>
             </v-list-item-icon>
@@ -99,33 +103,28 @@ export default {
       }
     },
     logout: function () {
-      this.$store.dispatch('logout')
+      this.$store.commit('auth/logout')
         .then(() => {
           this.$router.push('login')
         })
     }
   },
   data: () => ({
+    accountLinks: [
+      { name: 'profile', path: '/account'},
+      { name: 'logout', path: '/logout'}
+    ],
+    navLinks: [
+      { name: 'Decks', path: '/hearthstone/decks'},
+      { name: 'Cards', path: '/hearthstone/cards'},
+      { name: 'News', path: '/'}
+    ],
     drawer: false,
     group: null,
-    items: [
-      {
-        title: 'Click Me',
-        link: '',
-        action: 'profile',
-        method: ''
-      },
-      {
-        title: 'Deconnexion',
-        link: '',
-        action: 'logout',
-        method: ''
-      }
-    ]
   }),
   computed: {
     isLoggedIn: function () {
-      return this.$store.state.auth.isLogged
+      return this.$store.commit('auth/login')
     }
   }
 }

@@ -13,10 +13,12 @@
 <script>
 export default {
   name: 'LoginPage',
-  beforeMount () {
-    if (this.$cookies.get('Authentication'))
-      this.$router.replace('/')
-  },
+  beforeRouteEnter(to, from, next) {
+    next(vm => {
+      if (vm.$store.state.auth.logged)
+        vm.$router.replace(from.path || from.fullPath)
+    })
+  }
 }
 </script>
 
