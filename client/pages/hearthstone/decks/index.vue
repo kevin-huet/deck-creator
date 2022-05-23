@@ -8,6 +8,11 @@
             <v-col cols="3">
               <DeckCard :deck-id="1"/>
             </v-col>
+            <v-pagination
+              v-model="page"
+              :length="15"
+              :total-visible="7"
+            ></v-pagination>
           </v-card>
         </v-col>
       </v-row>
@@ -18,7 +23,14 @@
 <script>
 export default {
   name: 'HearthstoneDecksPage',
-  data: () => ({})
+  data: () => ({
+    page: 1,
+    decks: []
+  }),
+  async beforeMount() {
+    const result = this.$axios.get(process.env.apiBaseUrl + `/hearthstone/decks?page=${this.page}`)
+    this.decks = result?.data?.decks
+  }
 }
 </script>
 

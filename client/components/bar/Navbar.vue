@@ -9,7 +9,7 @@
 
       <v-toolbar-title>Deck Creator</v-toolbar-title>
       <v-toolbar-items class="hidden-sm-and-down ml-6">
-        <v-btn v-for="item in navLinks" text small :to="item.path">
+        <v-btn v-for="item in navLinks" text small :key="item.name" :to="item.path">
           {{ item.name }}
         </v-btn>
       </v-toolbar-items>
