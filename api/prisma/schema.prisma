@@ -29,6 +29,7 @@ model Deck {
   author                    User?           @relation(fields: [authorId], references: [id])
   class                     HsClass?        @relation(fields: [classId], references: [blizzard_id])
   cards                     CardOnDeck[]
+  nbCards                   Int             @default(0)
   authorId Int?
   classId Int?
 }
@@ -37,6 +38,7 @@ model CardOnDeck {
   id                        Int             @default(autoincrement()) @id
   deck                      Deck            @relation(fields: [deckId], references: [id])
   card                      Card            @relation(fields: [cardId], references: [blizzard_id])
+  nb                        Int             @default(1)
   deckId                    Int
   cardId                    Int
 }
@@ -44,32 +46,44 @@ model CardOnDeck {
 model Card {
   id                        Int             @default(autoincrement()) @id
   blizzard_id               Int?            @unique
-  hsClass                   HsClass?        @relation(fields: [hsClassId], references: [blizzard_id])
+  hsClass                   HsClass?        @relation("classCard", fields: [hsClassId], references: [blizzard_id])
   cardType                  CardType?       @relation(fields: [cardTypeId], references: [blizzard_id])
   minionType                MinionType?     @relation(fields: [minionTypeId], references: [blizzard_id])
   cardSet                   CardSet?        @relation(fields: [cardSetId], references: [blizzard_id])
   rarity                    Rarity?         @relation(fields: [rarityId], references: [blizzard_id])
   spellSchool               SpellSchool?    @relation(fields: [spellSchoolId], references: [blizzard_id])
+  multiHsClass              MultiClassCard[]
+  gameModeCards             GameModeCard[]
   keywordCards              KeywordCard[]
   decks                     CardOnDeck[]
   artistName                String?
   health                    Int?
   attack                    Int?
   manaCost                  Int?
-  name                      String?
+  name                      String
   text                      String?
   image                     String?
-  slug                      String?
+  slug                      String           @unique
   imageGold                 String?
   flavorText                String?
   cropImage                 String?
   //key
+  heroCardClassId           Int?
+  powerCardClassId          Int?
   cardSetId                 Int?
   rarityId                  Int?
   hsClassId                 Int?
   cardTypeId                Int?
   minionTypeId              Int?
   spellSchoolId             Int?
+}
+
+model GameModeCard {
+  id                        Int             @default(autoincrement()) @id
+  gameMode                  GameMode        @relation(fields: [gameModeId], references: [blizzard_id])
+  card                      Card            @relation(fields: [cardId], references: [blizzard_id])
+  gameModeId                Int
+  cardId                    Int
 }
 
 model KeywordCard {
@@ -84,7 +98,7 @@ model Keyword {
   id                        Int             @default(autoincrement()) @id
   blizzard_id               Int             @unique
   name                      String          @default("")
-  slug                      String          @default("")
+  slug                      String          @unique
   keywordCards              KeywordCard[]
   text                      String
   refText                   String
@@ -104,6 +118,7 @@ model GameMode {
   blizzard_id               Int             @unique
   slug                      String
   name                      String
+  gameModeCards             GameModeCard[]
   cardTypes                 GameModeCardType[]
   minionTypes               GameModeMinionType[]
 }
@@ -118,12 +133,32 @@ model Rarity {
   cards                     Card[]
 }
 
+model SetGroup {
+  id                        Int             @default(autoincrement()) @id
+  name                      String
+  slug                      String          @unique
+  setGroupCards             SetGroupCard[]
+  year                      Int?
+  svg                       String?
+  standard                  Boolean?
+  icon                      String?
+}
+
+model SetGroupCard {
+  id                        Int             @default(autoincrement()) @id
+  setGroup                  SetGroup        @relation(fields: [setGroupSlug], references: [slug])
+  cardSet                   CardSet         @relation(fields: [cardSetSlug], references: [slug])
+  setGroupSlug              String
+  cardSetSlug               String
+}
+
 model CardSet {
   id                        Int             @default(autoincrement()) @id
   blizzard_id               Int             @unique
   name                      String
-  slug                      String
+  slug                      String          @unique
   type                      String
+  setGroupCards             SetGroupCard[]
   collectibleCount          Int
   collectibleRevealedCount  Int
   nonCollectibleCount       Int
@@ -135,7 +170,7 @@ model MinionType {
   id                        Int             @default(autoincrement()) @id
   blizzard_id               Int             @unique
   name                      String
-  slug                      String
+  slug                      String          @unique
   cards                     Card[]
   gameModes                 GameModeMinionType[]
 }
@@ -160,17 +195,26 @@ model SpellSchool {
   id                        Int             @default(autoincrement()) @id
   blizzard_id               Int             @unique
   name                      String
-  slug                      String
+  slug                      String          @unique
   cards                     Card[]
+}
+
+model MultiClassCard {
+      id                    Int             @default(autoincrement()) @id
+      hsClass               HsClass         @relation(fields: [hsClassId], references: [blizzard_id])
+      card                  Card            @relation(fields: [cardId], references: [blizzard_id])
+      hsClassId             Int
+      cardId                Int
 }
 
 model HsClass {
   id                        Int             @default(autoincrement()) @id
   blizzard_id               Int             @unique
   name                      String
-  slug                      String
-  cards                     Card[]
+  slug                      String          @unique
+  cards                     Card[]          @relation("classCard")
   decks                     Deck[]
+  multiClassCards           MultiClassCard[]
   powerCardId               Int?
   heroCardId                Int?
   alternateHeroCardIds      Int[]

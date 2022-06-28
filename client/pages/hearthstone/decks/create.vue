@@ -56,7 +56,7 @@ export default {
   methods: {
     validate (form) {
       console.log('valid form')
-      axios.post(process.env.apiBaseUrl + '/hearthstone/deck/create',
+      axios.post(process.env.apiBaseUrl + '/hearthstone/deck',
         {
           ...form
         }, { withCredentials: true })

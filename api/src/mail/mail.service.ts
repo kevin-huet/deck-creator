@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from "@nestjs-modules/mailer";
-import { User as UserModel } from 'prisma';
+import { User as UserModel } from '@prisma/client';
 @Injectable()
 export class MailService {
   constructor(private mailerService: MailerService) {}

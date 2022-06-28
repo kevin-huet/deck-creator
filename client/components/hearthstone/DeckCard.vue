@@ -24,18 +24,12 @@
         align="center"
         class="mx-0"
       >
-        <v-rating
-          :value="4.5"
-          color="amber"
-          dense
-          half-increments
-          readonly
-          size="14"
-        ></v-rating>
-
-        <div class="grey--text ms-4">
-          4.5 (413)
-        </div>
+        <v-btn icon small>
+          <v-icon>mdi-thumb-up</v-icon>
+        </v-btn>
+        <v-btn icon small>
+          <v-icon>mdi-thumb-down</v-icon>
+        </v-btn>
       </v-row>
 
       <div class="my-4">
@@ -45,10 +39,10 @@
 
     <v-divider class="mx-4"></v-divider>
     <v-list-item>
-      <v-list-item-subtitle>Mana cost: <b>{{ deckCost }}</b></v-list-item-subtitle>
+      <v-list-item-subtitle>Craft cost: <b>{{ deckCost }}</b></v-list-item-subtitle>
     </v-list-item>
     <v-list-item>
-      <v-list-item-subtitle>Average cost: <b>{{ deckCost }}</b></v-list-item-subtitle>
+      <v-list-item-subtitle>Average cost: <b>0</b></v-list-item-subtitle>
     </v-list-item>
     <v-list-item>
       <v-list-item-subtitle>Card number: <b>{{ deckCardNb }}</b></v-list-item-subtitle>
@@ -81,7 +75,7 @@
 
 <script>
 export default {
-name: "DeckCard",
+  name: "DeckCard",
   props: {
     deckId: Number,
     deckName: String,
@@ -92,11 +86,9 @@ name: "DeckCard",
     deckCardNb: Number,
     deckAuthor: String
   },
-  data: () => ({
-  }),
+  data: () => ({}),
 
-  methods: {
-  }
+  methods: {}
 }
 </script>
 

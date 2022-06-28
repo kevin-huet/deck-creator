@@ -1,15 +1,23 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from "../user/user.service";
-import * as bcrypt from "bcrypt";
+import { UserService } from '../user/user.service';
+import * as bcrypt from 'bcrypt';
 import { User as UserModel } from 'prisma';
-import { Prisma } from "@prisma/client";
-import { MailService } from "../mail/mail.service";
-import * as dayjs from 'dayjs'
+import { Prisma } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private usersService: UserService, private mailService: MailService, private jwt: JwtService){}
+  constructor(
+    private usersService: UserService,
+    private mailService: MailService,
+    private jwt: JwtService,
+  ) {}
 
   public async createUser(data: Prisma.UserCreateInput) {
     data.password = this.encodePassword(data.password);
@@ -21,14 +29,17 @@ export class AuthService {
     return null;
   }
 
-  public async login(body: { email: string, password: string }): Promise<any> {
+  public async login(body: { email: string; password: string }): Promise<any> {
     const { email, password } = body;
     const user: UserModel = await this.usersService.findOne({ email });
     if (!user) {
       throw new HttpException('No user found', HttpStatus.UNAUTHORIZED);
     }
 
-    const isPasswordValid: boolean = this.isPasswordValid(password, user.password);
+    const isPasswordValid: boolean = this.isPasswordValid(
+      password,
+      user.password,
+    );
 
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
@@ -43,14 +54,15 @@ export class AuthService {
   public async verificationCode(email: string, code: string) {
     const user = await this.usersService.findOne({ email });
 
-    if (!user)
-      return { error: true, message: 'email not exist in database' };
-    if (user.verified)
-      return { error: true, message: 'User already verified' };
+    if (!user) return { error: true, message: 'email not exist in database' };
+    if (user.verified) return { error: true, message: 'User already verified' };
     if (user.verificationCode !== code)
       return { error: true, message: 'Invalid code' };
-    await this.usersService.updateUser({ where: { id: user.id }, data: { verified: true } });
-    return { error: false, message: 'User has been verified' }
+    await this.usersService.updateUser({
+      where: { id: user.id },
+      data: { verified: true },
+    });
+    return { error: false, message: 'User has been verified' };
   }
 
   public async refresh(user: UserModel): Promise<string> {
@@ -106,10 +118,8 @@ export class AuthService {
   public async sendVerificationCode(email: string) {
     const user = await this.usersService.findOne({ email });
 
-    if (!user)
-      return { error: true, message: 'User not exist' };
-    if (user.verified)
-      return { error: true, message: 'User already verified' };
+    if (!user) return { error: true, message: 'User not exist' };
+    if (user.verified) return { error: true, message: 'User already verified' };
     await this.mailService.sendUserConfirmation(user);
     return { error: false, message: 'code send' };
   }

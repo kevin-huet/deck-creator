@@ -21,12 +21,14 @@
     "vue": "^2.6.14",
     "vue-server-renderer": "^2.6.14",
     "vue-template-compiler": "^2.6.14",
+    "vuedraggable": "^2.24.3",
     "vuetify": "^2.6.1",
     "vuex": "^3.6.2",
     "webpack": "^4.46.0"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.16.3",
+    "@nuxt/image": "^0.6.2",
     "@nuxt/types": "^2.15.8",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config-typescript": "^8.0.0",

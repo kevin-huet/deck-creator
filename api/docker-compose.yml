@@ -1,8 +1,8 @@
 version: '3.8'
 services:
-  db:
+  hs_db:
     image: postgres:latest
-    container_name: database
+    container_name: hs
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

@@ -1,42 +1,69 @@
-import { Controller, Get, Post, UseGuards, Request, Body, HttpException, HttpStatus, Res } from "@nestjs/common";
-import { AuthService } from "./auth.service";
-import { JwtAuthGuard } from "./jwt-auth.guard";
-import { UserDto } from "../user/dto/user.dto";
-import { Response } from "express";
-import * as dayjs from 'dayjs'
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Request,
+  Body,
+  HttpException,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { UserDto } from '../user/dto/user.dto';
+import { Response } from 'express';
+import * as dayjs from 'dayjs';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
-  async login(@Request() req, @Res() res: Response) {
-    const { jwt, user } = await this.authService.login(req.body);
+  async login(@Body() body, @Res() res: Response) {
+    const { jwt, user } = await this.authService.login(body);
     res.cookie('Authentication', jwt, {
-      expires: dayjs().add(7,'days').toDate()
-    })
-    res.status(200).json({ user: user });
+      expires: dayjs().add(7, 'days').toDate(),
+    });
+    return res.status(200).json({ user: user });
+  }
+
+  @Get('logout')
+  async logout(@Res() res: Response) {
+    res.cookie('Authentication', null, {
+      expires: dayjs().toDate(),
+    });
+    return res.status(200).json({});
   }
 
   @Post('register')
   async register(@Body() body: UserDto) {
-    const {username, email, password, terms} = body;
+    const { username, email, password, terms } = body;
     if (body.passwordCheck !== password)
-      throw new HttpException('the two passwords are not identical', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'the two passwords are not identical',
+        HttpStatus.BAD_REQUEST,
+      );
     try {
-      await this.authService.createUser({username, email, password, terms});
+      await this.authService.createUser({ username, email, password, terms });
     } catch (e) {
-      throw new HttpException('username or email already use', HttpStatus.CONFLICT);
+      throw new HttpException(
+        'username or email already use',
+        HttpStatus.CONFLICT,
+      );
     }
-    return { username, email }
+    return { username, email };
   }
 
   @Post('code')
   async verificationCode(@Body() body) {
-    const result = await this.authService.verificationCode(body.email, body.code);
+    const result = await this.authService.verificationCode(
+      body.email,
+      body.code,
+    );
     if (result.error)
-      throw new HttpException(result.message, HttpStatus.CONFLICT)
-    return result.message
+      throw new HttpException(result.message, HttpStatus.CONFLICT);
+    return result.message;
   }
 
   @Post('send_code')
@@ -49,10 +76,10 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('user_info')
+  @Get('user')
   getUserInfo(@Request() req) {
     return {
-      user: req.user
-    }
+      user: req.user,
+    };
   }
 }

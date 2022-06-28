@@ -6,17 +6,16 @@
       v-model="form.valid"
       lazy-validation
     >
-      <v-row>
-        <v-col offset="4" offset-lg="5" sm="12" md="6" lg="2" cols="2">
-          <v-text-field
+      <v-layout class="d-flex justify-center">
+          <v-otp-input
+            style="max-width: 300px"
             v-model="form.code"
-            :counter="6"
             :rules="form.codeRules"
             label="code"
             required
-          ></v-text-field>
-        </v-col>
-      </v-row>
+            length="6"
+          ></v-otp-input>
+      </v-layout>
 
       <v-layout class="d-flex justify-end">
         <v-btn

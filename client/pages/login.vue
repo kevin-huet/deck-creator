@@ -14,12 +14,28 @@
 
 <script>
 export default {
-  name: 'LoginPage',
-  beforeRouteEnter(to, from, next) {
-    next(vm => {
-      if (vm.$store.state.auth.logged)
-        vm.$router.replace(from.path || from.fullPath)
-    })
+  name: 'HearthstoneDecksPage',
+  data: () => ({
+    page: 1,
+    totalDecks: 8,
+    decks: [],
+    deckPage: 16,
+    deckPagination: 1
+  }),
+  methods: {
+    async changePage() {
+      const result = await this.$axios.get(process.env.apiBaseUrl + `/hearthstone/decks?page=${this.page}`)
+      this.decks = result?.data?.decks
+      console.log(result.data)
+    }
+  },
+  async beforeMount() {
+    this.deckPagination = (this.totalDecks > 16) ? this.totalDecks / 16 : 1
+    const result = await this.$axios.get(process.env.apiBaseUrl + `/hearthstone/decks?page=${this.page}`)
+    this.decks = result?.data?.decks
+    console.log(result.data)
+    this.totalDecks = result?.data?.count
+    this.totalDecks = 18
   }
 }
 </script>
