@@ -1,5 +1,5 @@
 client/.idea
-client/.nuxt
+client/.next
 client/node_modules
 client/package-lock.json
 client/dist

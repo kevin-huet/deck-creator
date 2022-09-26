@@ -1,7 +1,7 @@
 export class UserDto {
-  username: string
-  email: string
-  password: string
-  passwordCheck: string
-  terms: boolean
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  terms: boolean;
 }

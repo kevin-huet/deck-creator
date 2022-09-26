@@ -4,7 +4,7 @@ import { BlizzardApi } from 'blizzard-api-sample';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
-export class UserCommand {
+export class HearthstoneDataCommand {
   private blizzardApi: BlizzardApi;
   private prisma: PrismaService;
   constructor() {
@@ -13,7 +13,7 @@ export class UserCommand {
   }
 
   @Command({
-    command: 'blizzard:hearthstone',
+    command: 'blizzard:hearthstone:metadata',
     describe: 'get and add/update all hearthstone data',
   })
   async create() {
@@ -224,7 +224,7 @@ export class UserCommand {
         },
       });
     });
-    await this.initCardsCollection();
+    //await this.initCardsCollection();
   }
 
   async initCardsCollection() {
@@ -243,6 +243,9 @@ export class UserCommand {
       if (card.cardSetId >= 12) {
         const cardSet = await this.prisma.cardSet.findUnique({
           where: { blizzard_id: card.cardSetId },
+        });
+        card?.keywordIds?.map((keywordId) => {
+          console.log(keywordId);
         });
         try {
           await this.prisma.card.upsert({
@@ -268,6 +271,15 @@ export class UserCommand {
               ...(card.minionTypeId && {
                 minionType: {
                   connect: { blizzard_id: card.minionTypeId },
+                },
+              }),
+              ...(card.keywordIds && {
+                keywordCards: {
+                  create: card.keywordIds.map((keywordId) => ({
+                    keyword: {
+                      connect: { blizzard_id: keywordId },
+                    },
+                  })),
                 },
               }),
               ...(card.spellSchool && {
@@ -302,7 +314,70 @@ export class UserCommand {
               flavorText: card.flavorText,
               keywordCards: {},
             },
-            update: {},
+            update: {
+              blizzard_id: card.id,
+              slug: card.slug,
+              name: card.name,
+              ...(card.multiClassIds && {
+                multiHsClass: {
+                  connectOrCreate: card.multiClassIds.map((classId) => ({
+                    hsClass: {
+                      connect: { blizzard_id: classId },
+                    },
+                  })),
+                },
+              }),
+              ...(card.classId && {
+                hsClass: {
+                  connect: { blizzard_id: card.classId },
+                },
+              }),
+              ...(card.minionTypeId && {
+                minionType: {
+                  connect: { blizzard_id: card.minionTypeId },
+                },
+              }),
+              ...(card.keywordIds && {
+                keywordCards: {
+                  create: card.keywordIds.map((keywordId) => ({
+                    keyword: {
+                      connect: { blizzard_id: keywordId },
+                    },
+                  })),
+                },
+              }),
+              ...(card.spellSchool && {
+                spellSchool: {
+                  connect: { blizzard_id: card.spellSchoolId },
+                },
+              }),
+              ...(card.cardTypeId && {
+                cardType: {
+                  connect: { blizzard_id: card.cardTypeId },
+                },
+              }),
+              ...(card.cardSetId &&
+                cardSet && {
+                  cardSet: {
+                    connect: { blizzard_id: card.cardSetId },
+                  },
+                }),
+              ...(card.rarityId && {
+                rarity: {
+                  connect: { blizzard_id: card.rarityId },
+                },
+              }),
+              health: card.health,
+              attack: card.attack,
+              manaCost: card.manaCost,
+              artistName: card.artistName,
+              text: card.text,
+              image: card.image,
+              imageGold: card.imageGold,
+              cropImage: card.cropImage,
+              flavorText: card.flavorText,
+              keywordCards: {},
+            },
           });
         } catch (e) {
           console.log(e);

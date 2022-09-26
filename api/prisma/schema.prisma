@@ -14,10 +14,12 @@ model User {
   id                        Int             @default(autoincrement()) @id
   decks                     Deck[]
   email                     String          @unique
-  createdAt                 DateTime        @default(now())
-  updatedAt                 DateTime        @default(now())
   username                  String          @unique
   password                  String
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @default(now())
+  lastLoginAt               DateTime?
+  IPsLogged                 String[]
   terms                     Boolean         @default(false)
   verified                  Boolean         @default(false)
   verificationCode          String          @default("")

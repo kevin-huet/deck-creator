@@ -22,6 +22,7 @@ export class HearthstoneController {
 
   @Get('cards')
   async showCards(@Query() query): Promise<object> {
+    console.log(query);
     const { page, name, cardClass, cardType } = query;
     return this.hsService.getCards(
       page,

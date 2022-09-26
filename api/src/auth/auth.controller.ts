@@ -14,14 +14,15 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { UserDto } from '../user/dto/user.dto';
 import { Response } from 'express';
 import * as dayjs from 'dayjs';
+import {RealIp, RealIP} from "nestjs-real-ip";
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() body, @Res() res: Response) {
-    const { jwt, user } = await this.authService.login(body);
+  async login(@RealIP() ip, @Body() body, @Res() res: Response) {
+    const { jwt, user } = await this.authService.login(body, ip);
     res.cookie('Authentication', jwt, {
       expires: dayjs().add(7, 'days').toDate(),
     });
@@ -38,20 +39,14 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() body: UserDto) {
-    const { username, email, password, terms } = body;
-    if (body.passwordCheck !== password)
+    const { username, email, password, terms, confirmPassword } = body;
+    console.log(body);
+    if (confirmPassword !== password)
       throw new HttpException(
         'the two passwords are not identical',
         HttpStatus.BAD_REQUEST,
       );
-    try {
-      await this.authService.createUser({ username, email, password, terms });
-    } catch (e) {
-      throw new HttpException(
-        'username or email already use',
-        HttpStatus.CONFLICT,
-      );
-    }
+    await this.authService.createUser({ username, email, password, terms });
     return { username, email };
   }
 

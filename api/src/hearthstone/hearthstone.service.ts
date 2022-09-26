@@ -42,7 +42,7 @@ export class HearthstoneService {
       },
       AND: [
         {
-          OR: [{ hsClassId: 12 }, { hsClassId: hsClass.blizzard_id }],
+          OR: [{ hsClassId: 12 }, { hsClassId: hsClass?.blizzard_id }],
         },
         {
           OR: [
@@ -54,7 +54,7 @@ export class HearthstoneService {
             {
               multiHsClass: {
                 some: {
-                  hsClassId: hsClass.blizzard_id,
+                  hsClassId: hsClass?.blizzard_id,
                 },
               },
             },
@@ -111,10 +111,12 @@ export class HearthstoneService {
         },
       }),
     ]);
-    return { cards, count };
+    return { cards, count, hsClass };
   }
 
-  async removeCardFromDeck() {}
+  async removeCardFromDeck() {
+    return;
+  }
 
   async addCardToDeck(deckId, cards: Card[]) {
     await this.prisma.$transaction([

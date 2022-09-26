@@ -1,10 +1,15 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { HearthstoneModule } from './hearthstone/hearthstone.module';
 import { ConfigModule } from '@nestjs/config';
 import { CommandModule } from 'nestjs-command';
-import { UserCommand } from './command/hs.data.command';
+import { HearthstoneDataCommand } from './command/hs.data.command';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { UserCreateCommand } from './command/user.create.command';
@@ -13,6 +18,9 @@ import { AuthService } from './auth/auth.service';
 import { PrismaService } from './prisma.service';
 import { MailService } from './mail/mail.service';
 import { JwtService } from '@nestjs/jwt';
+import { AppController } from './app.controller';
+import { CsrfMiddleware } from './middleware/csrf.middleware';
+import { CreateCardCommand } from "./command/hs.cards.command";
 
 @Module({
   imports: [
@@ -23,7 +31,7 @@ import { JwtService } from '@nestjs/jwt';
     ConfigModule.forRoot(),
     MailModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     PrismaService,
     MailService,
@@ -31,8 +39,15 @@ import { JwtService } from '@nestjs/jwt';
     AppService,
     UserService,
     AuthService,
-    UserCommand,
     UserCreateCommand,
+    HearthstoneDataCommand,
+    CreateCardCommand,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): any {
+    consumer
+      .apply(CsrfMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
