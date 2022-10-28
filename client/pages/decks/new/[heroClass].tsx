@@ -158,12 +158,23 @@ export const SearchForm = () => {
     )
 }
 
-export const HsCardStack = ({deckCards, setDeckCards}: any) => {
+export const HsCardStack = ({deckCards, setDeckCards}: { deckCards: CardType[], setDeckCards: any}) => {
     const [menuOpened, setMenuOpened] = useState(false);
     const [cardTarget, setTarget] = useState(undefined);
     const [menuPosition, setMenuPosition] = useState({x: 0, y: 0})
     const removeCardFromDeck = (card: CardType) => {
-        setDeckCards(deckCards.filter((item: CardType) => item.blizzard_id !== card.blizzard_id))
+        let nextDeckCards: CardType[] = [...deckCards];
+        const find: CardType|undefined = deckCards.find((deckCard: CardType) => deckCard.blizzard_id === card.blizzard_id);
+        if (find) {
+            if (find.nb === 2) {
+                find.nb--;
+            } else {
+                nextDeckCards = nextDeckCards.filter((item: CardType) =>
+                    item.blizzard_id !== card.blizzard_id
+                )
+            }
+            setDeckCards(nextDeckCards);
+        }
         setMenuOpened(false)
     }
     const moveMenu = (e: MouseEvent) => {
