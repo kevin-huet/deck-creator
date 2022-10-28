@@ -24,7 +24,6 @@ export type HearthstoneCard = {
     imageGold?: string,
     hsClassId?: number,
     flavorText?: string,
-    nb?: number
 }
 
 export type Rarity = {
@@ -41,6 +40,7 @@ export type CardType = {
     blizzard_id: number,
     slug: string,
     name: string,
+    nb?: number,
 }
 
 export type Deck = {

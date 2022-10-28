@@ -7,17 +7,16 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // @ts-ignore
   app.use(helmet());
   app.enableCors({
-    origin: ['http://localhost:8000'],
-    methods: ['POST', 'PUT', 'DELETE', 'GET'],
+    origin: ['http://localhost:8000', 'http://localhost:3000'],
+    methods: ['POST', 'PUT', 'DELETE', 'GET', 'PATCH'],
     credentials: true,
     allowedHeaders:
       'X-Requested-With, X-CSRF-Token, CSRF-Token, X-HTTP-Method-Override, Content-Type, Accept, Observe',
   });
   app.use(cookieParser());
-  app.use(csurf({ cookie: true }));
+  //app.use(csurf({ cookie: true }));
   const config = new DocumentBuilder()
     .setTitle('DeckCreator')
     .setDescription('The DeckCreator API description')

@@ -8,13 +8,15 @@ import {
   HttpException,
   HttpStatus,
   Res,
+  Req,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService, EXISTED } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UserDto } from '../user/dto/user.dto';
 import { Response } from 'express';
 import * as dayjs from 'dayjs';
-import {RealIp, RealIP} from "nestjs-real-ip";
+import { RealIP } from 'nestjs-real-ip';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -40,7 +42,6 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: UserDto) {
     const { username, email, password, terms, confirmPassword } = body;
-    console.log(body);
     if (confirmPassword !== password)
       throw new HttpException(
         'the two passwords are not identical',
@@ -72,9 +73,36 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('user')
-  getUserInfo(@Request() req) {
+  async getUserInfo(@Request() req) {
     return {
       user: req.user,
     };
+  }
+
+  @Get('discord')
+  @UseGuards(AuthGuard('discord'))
+  async discordAuth(@Req() req) {}
+
+  @Get('discord/redirect')
+  @UseGuards(AuthGuard('discord'))
+  async discordAuthRedirect(@Req() req, @Res() res) {
+    console.log(req);
+    if (!req.user) {
+      return 'No user from discord';
+    }
+    const { email, username, discriminator } = req.user;
+    const { user, status } = await this.authService.createSocialUser({
+      email,
+      username: username + discriminator,
+      socialLogin: 'DISCORD',
+    });
+    const jwt = this.authService.generateToken(user.id);
+    res.cookie('Authentication', jwt, {
+      expires: dayjs().add(7, 'days').toDate(),
+    });
+    if (status === EXISTED) {
+      return res.redirect('http://localhost:8000/');
+    }
+    return res.redirect('http://localhost:8000/');
   }
 }

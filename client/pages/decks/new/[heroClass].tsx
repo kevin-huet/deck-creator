@@ -4,34 +4,60 @@ import {
     Stack,
     Text,
     Card,
+    Group,
+    Avatar,
+    Slider,
+    ActionIcon,
     Box,
     Col,
+    RangeSlider,
     Button,
     Container,
     Grid,
     Pagination,
     Center,
-    Skeleton, TextInput
+    Select,
+    Skeleton,
+    TextInput, SelectItem
 } from '@mantine/core';
 import Head from "next/head";
 import {useRouter} from "next/router";
 import Image from "next/image";
-import React, {useEffect, useState} from "react";
+import React, {forwardRef, useEffect, useState} from "react";
 import {CardMenu} from "../../../components/hearthstone/CardMenu";
 import {CardType, hsClassType} from "../../../types/hearthstone.types";
-import {Input} from "postcss";
+import {IconSearch} from "@tabler/icons";
 
 const NewDeck: NextPage = () => {
     const router = useRouter();
-    const {heroClass} = router.query;
+    const {heroClass, mode} = router.query;
+    const [code, setCode] = useState('');
     const [cards, setCards] = useState([]);
     const [hsClass, setHsClass] = useState<hsClassType>();
     const [deckCards, setDeckCards] = useState<CardType[]>([]);
     const [activePage, setPage] = useState(1);
 
+    async function getDeckCode(cards: CardType[], hsClass: hsClassType | undefined) {
+        if (hsClass) {
+            fetch(`http://localhost:8000/hearthstone/encode`, {
+                body: JSON.stringify({cards: cards, classSlug: hsClass.slug}),
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    console.log(data);
+                    setCode(data.code);
+                })
+        }
+    }
+
     useEffect(() => {
         if (heroClass && activePage > 0)
-            fetch(`http://localhost:3000/hearthstone/cards?page=${activePage}&cardClass=${heroClass}`)
+            fetch(`http://localhost:3000/hearthstone/cards?page=${activePage}&cardClass=${heroClass}&mode=${mode}`)
                 .then((res) => res.json())
                 .then((data) => {
                     setCards(data?.cards)
@@ -49,6 +75,9 @@ const NewDeck: NextPage = () => {
                     <Card.Section withBorder={true} inheritPadding py="xs">
                         <Text align={"center"} weight={500}>Review pictures</Text>
                     </Card.Section>
+                    <Card.Section withBorder={true} inheritPadding py="xs">
+                        <SearchForm/>
+                    </Card.Section>
                     <Card.Section p="xs">
                         <Grid>
                             <Col span={9}>
@@ -59,7 +88,7 @@ const NewDeck: NextPage = () => {
                                     </Card.Section>
                                     <Card.Section sx={{overflowY: 'auto', overflowX: "hidden", height: 600}} py="xs"
                                                   px="xs">
-                                        <CardList setDeckCards={setDeckCards} cards={cards}/>
+                                        <CardList deckCards={deckCards} setDeckCards={setDeckCards} cards={cards}/>
                                     </Card.Section>
                                     <Card.Section withBorder={true}>
                                         <Center py="md"><Pagination page={activePage} onChange={(nb) => {
@@ -71,15 +100,19 @@ const NewDeck: NextPage = () => {
                             <Col span={3}>
                                 <Card withBorder={true}>
                                     <Card.Section withBorder={true}>
-                                        <Text align={"center"} weight={500} py="xs">Deck</Text>
+                                        <Text align={"center"} weight={500} py="xs">Deck - ({deckCards.length} /
+                                            30)</Text>
                                     </Card.Section>
                                     <Card.Section sx={{overflowY: 'auto', height: 600}} py="xs" px="xs">
                                         <HsCardStack setDeckCards={setDeckCards} deckCards={deckCards}/>
                                     </Card.Section>
                                     <Card.Section withBorder={true} px={'sm'} py={'sm'}>
-                                            <TextInput my={'sm'} placeholder="deckCode" value={'Generate your deck code'} contentEditable={false}/>
-                                            <Button mr={'sm'} variant="gradient"
-                                                    gradient={{from: 'indigo', to: 'cyan'}}>Encode</Button>
+                                        <TextInput onChange={() => {
+                                        }} my={'sm'} placeholder="deckCode" value={code}
+                                                   contentEditable={false}/>
+                                        <Button onClick={() => getDeckCode(deckCards, hsClass)} mr={'sm'}
+                                                variant="gradient"
+                                                gradient={{from: 'indigo', to: 'cyan'}}>Encode</Button>
                                     </Card.Section>
                                 </Card>
                             </Col>
@@ -87,6 +120,40 @@ const NewDeck: NextPage = () => {
                     </Card.Section>
                 </Card>
             </Container>
+        </>
+    )
+}
+
+export const SearchForm = () => {
+    const items: any = Array.from({length: 11}, (_, index) => ({ label: `${index} Mana`, value: index }));
+    items.unshift({ label: 'All', value: -1 });
+    console.log(items)
+    return (
+        <>
+            <Grid>
+                <Col span={3}>
+                    <TextInput
+                        placeholder="Your name"
+                        label="Full name"
+                        withAsterisk
+                    />
+                </Col>
+                <Col span={6} sm={6} md={3} lg={3}>
+                    <Select
+                        label="Cost"
+                        placeholder="Pick one"
+                        searchable
+                        nothingFound="No options"
+                        maxDropdownHeight={280}
+                        data={items}
+                    />
+                </Col>
+                <Col span={3}>
+                    <Center>
+                    <ActionIcon size="lg" variant="filled"><IconSearch size={'18'}/></ActionIcon>
+                    </Center>
+                </Col>
+            </Grid>
         </>
     )
 }
@@ -137,6 +204,10 @@ export const HsCardStack = ({deckCards, setDeckCards}: any) => {
                                      py={2}>
                                     <Text align={"center"}>{card.name}</Text>
                                 </Box>
+                                <Box sx={{background: 'black', width: 'max-content', borderRadius: 10}} mx="xs" px="xs"
+                                     py={2}>
+                                    <Text align={"left"}>x{card.nb ? card.nb : 1}</Text>
+                                </Box>
                             </BackgroundImage>
                         </Box>
                     )
@@ -146,7 +217,7 @@ export const HsCardStack = ({deckCards, setDeckCards}: any) => {
     )
 }
 
-export const CardList = ({cards, setDeckCards}: any) => {
+export const CardList = ({cards, setDeckCards, deckCards}: any) => {
     const [menuOpened, setMenuOpened] = useState(false);
     const [target, setTarget] = useState(undefined);
     const [menuPosition, setMenuPosition] = useState({x: 0, y: 0})
@@ -154,9 +225,23 @@ export const CardList = ({cards, setDeckCards}: any) => {
         setMenuPosition({x: e.clientX, y: e.clientY});
     }
     const addCardToDeck = (card: CardType) => {
-
-        setDeckCards((oldArray: CardType[]) => [...oldArray, card])
-        setMenuOpened(false)
+        if (deckCards.length >= 30)
+            return;
+        if (deckCards.some(function (el: CardType) {
+            return el.blizzard_id === card.blizzard_id;
+        })) {
+            setDeckCards((oldArray: CardType[]) =>
+                [...oldArray.map((item) => {
+                        if (item.blizzard_id === card.blizzard_id) {
+                            item.nb = 2;
+                            return item;
+                        }
+                        return item;
+                    }
+                )]
+            )
+        } else setDeckCards((oldArray: CardType[]) => [...oldArray, card]);
+        setMenuOpened(false);
     }
     useEffect(() => {
         const concernedElement = document.querySelector(".click-event-card");

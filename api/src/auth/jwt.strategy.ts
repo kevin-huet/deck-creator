@@ -3,6 +3,18 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { Request } from 'express';
+
+type UserAuth = {
+  id: number;
+  email: string;
+  username: string;
+  lastLoginAt: Date;
+  terms: boolean;
+  verified: boolean;
+  iat?: number;
+  exp?: number;
+};
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly userService: UserService) {
@@ -16,18 +28,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: {
-    id: number;
-    username: string;
-    iat: number;
-    exp: number;
-  }) {
+  async validate(payload: { id: number, exp: number, iat: number }) {
     console.log(payload);
-    if (payload.id && payload.username) {
-      const user = await this.userService.findOne({ id: payload.id });
-      user.password = undefined;
-      user.verificationCode = undefined;
-      return user;
+    if (payload.id) {
+      const user = await this.userService.findOne({
+        id: payload.id,
+      });
+      const { password, IPsLogged, verificationCode, ...rest } = user;
+      return { ...rest, iat: payload.iat, exp: payload.exp } as UserAuth;
     }
     return null;
   }

@@ -8,7 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { UserService } from '../user/user.service';
 import { PrismaService } from '../prisma.service';
 import { MailService } from '../mail/mail.service';
-import * as dayjs from 'dayjs';
+import { DiscordStrategy } from './strategies/discord.stategy';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import * as dayjs from 'dayjs';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '7d' },
+      signOptions: { expiresIn: '7d', algorithm: 'HS256' },
     }),
   ],
   controllers: [AuthController],
@@ -25,6 +25,7 @@ import * as dayjs from 'dayjs';
     UserService,
     PrismaService,
     JwtStrategy,
+    DiscordStrategy,
     MailService,
   ],
   exports: [AuthService],

@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {
     createStyles,
     ActionIcon,
@@ -10,9 +10,10 @@ import {
     Transition,
     useMantineColorScheme
 } from '@mantine/core';
-import {IconSun, IconMoonStars, IconLogin, IconUserPlus, IconUser} from '@tabler/icons';
+import {IconSun, IconMoonStars, IconLogin, IconUserPlus, IconUser, IconLogout} from '@tabler/icons';
 import {useDisclosure} from '@mantine/hooks';
 import Link from "next/link";
+import {AuthContext} from "../../lib/providers/auth.provider";
 
 const HEADER_HEIGHT = 60;
 
@@ -94,7 +95,11 @@ export const AppBar = ({links}: HeaderResponsiveProps) => {
     const [active, setActive] = useState(links[0].link);
     const {classes, cx} = useStyles();
     const {colorScheme, toggleColorScheme} = useMantineColorScheme();
+    const {auth, logout} = useContext(AuthContext);
 
+    useEffect(() => {
+        console.log(auth)
+    }, [auth])
     const items = links.map((link) => (
         <Link href={link.link} key={link.label}>
             <a
@@ -105,7 +110,15 @@ export const AppBar = ({links}: HeaderResponsiveProps) => {
             </a>
         </Link>
     ));
+    const authItems = (auth.isLogged) ? (
+        <ActionIcon onClick={() => logout()} size="lg" variant="filled"><IconLogout size={18}/></ActionIcon>
 
+    ) : (
+        <>
+            <Link href={'/auth/login'}><ActionIcon size="lg" variant="filled"><IconUser size={18}/></ActionIcon></Link>
+            <Link href={'/auth/register'}><ActionIcon size="lg" variant="filled"><IconUserPlus size={18}/></ActionIcon></Link>
+        </>
+    )
     return (
         <Header height={HEADER_HEIGHT} mb={120} className={classes.root}>
             <Container className={classes.header}>
@@ -127,9 +140,7 @@ export const AppBar = ({links}: HeaderResponsiveProps) => {
                     >
                         {colorScheme === 'dark' ? <IconSun size={18}/> : <IconMoonStars size={18}/>}
                     </ActionIcon>
-                    <Link href={'/auth/login'}><ActionIcon size="lg" variant="filled"><IconUser size={18}/></ActionIcon></Link>
-                    <Link href={'/auth/register'}><ActionIcon size="lg" variant="filled"><IconUserPlus size={18}/></ActionIcon></Link>
-
+                    {authItems}
                 </Group>
                 <Burger opened={opened} onClick={toggle} className={classes.burger} size="sm"/>
 

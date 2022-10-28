@@ -20,11 +20,13 @@ export class HearthstoneService {
   async getCards(
     page: number,
     nbPerPage: number,
+    setGroupSlug?: string,
     name?: string,
     cardClassSlug?: string,
     cardType?: number,
     manaCost?: number,
   ): Promise<object> {
+    console.log(setGroupSlug);
     const optionalSearch = {
       ...(cardType && { cardTypeId: cardType }),
       ...(manaCost && { manaCost: manaCost }),
@@ -36,7 +38,7 @@ export class HearthstoneService {
       cardSet: {
         setGroupCards: {
           some: {
-            setGroupSlug: 'standard',
+            setGroupSlug: setGroupSlug ? setGroupSlug : 'standard',
           },
         },
       },
@@ -247,7 +249,7 @@ export class HearthstoneService {
       heroes: [hsClass.heroCardId],
       format: 1,
     };
-    return encode(deck);
+    return { code: encode(deck) };
   }
 
   async getClasses() {

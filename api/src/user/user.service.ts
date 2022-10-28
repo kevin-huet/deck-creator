@@ -13,6 +13,10 @@ export class UserService {
     return this.prisma.user.create({ data });
   }
 
+  async createSocialUser(data: Prisma.UserCreateInput) {
+    return this.prisma.user.create({ data });
+  }
+
   async updateUser(params: {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;

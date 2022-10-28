@@ -1,6 +1,13 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+enum Social {
+  GOOGLE
+  APPLE
+  TWITTER
+  DISCORD
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,12 +17,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Roles {
+    ADMIN
+    MODERATOR
+    USER
+}
+
 model User {
   id                        Int             @default(autoincrement()) @id
   decks                     Deck[]
   email                     String          @unique
-  username                  String          @unique
-  password                  String
+  username                  String?         @unique
+  password                  String?
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @default(now())
   lastLoginAt               DateTime?
@@ -23,6 +36,7 @@ model User {
   terms                     Boolean         @default(false)
   verified                  Boolean         @default(false)
   verificationCode          String          @default("")
+  socialLogin               Social?
 }
 
 model Deck {

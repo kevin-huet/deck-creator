@@ -22,11 +22,11 @@ export class HearthstoneController {
 
   @Get('cards')
   async showCards(@Query() query): Promise<object> {
-    console.log(query);
-    const { page, name, cardClass, cardType } = query;
+    const { page, name, cardClass, cardType, mode } = query;
     return this.hsService.getCards(
       page,
       36,
+      mode,
       name,
       cardClass,
       cardType ? Number(cardType) : null,
@@ -46,6 +46,7 @@ export class HearthstoneController {
   @Post('encode')
   async generateDeckCode(@Body('classSlug') classSlug, @Body('cards') cards) {
     console.log(classSlug);
+    console.log(cards);
     if (!classSlug) {
       throw new HttpException(
         'classId must be defined',
