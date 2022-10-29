@@ -431,8 +431,8 @@ export const HsCard = ({ card }: any) => {
 };
 
 NewDeck.getInitialProps = () => {
-  return fetch("http://localhost:8000/api/hearthstone/cards/properties").then(
-    (res) => res.json()
+  return fetch("http://localhost:8000/api/hearthstone/metadata").then((res) =>
+    res.json()
   );
 };
 

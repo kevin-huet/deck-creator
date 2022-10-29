@@ -1,8 +1,23 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Deck, Card, Prisma } from '@prisma/client';
+import {
+  Deck,
+  Card,
+  Prisma,
+  Keyword,
+  Rarity,
+  CardType,
+  MinionType,
+} from '@prisma/client';
 import { BlizzardApi } from 'blizzard-api-sample';
 import { encode, decode, FormatType, DeckDefinition } from 'deckstrings';
+
+type PropertiesType = {
+  keyword: Keyword[];
+  minionType: MinionType[];
+  rarity: Rarity[];
+  cardType: CardType[];
+};
 
 @Injectable()
 export class HearthstoneService {
@@ -296,5 +311,21 @@ export class HearthstoneService {
       return { deck, cost: cost?.[0] | 0 };
     });
     return { decks: deckWithCost, count };
+  }
+
+  public async getProperties(): Promise<PropertiesType> {
+    const [keyword, rarity, cardType, minionType] =
+      await this.prisma.$transaction([
+        this.prisma.keyword.findMany(),
+        this.prisma.rarity.findMany(),
+        this.prisma.cardType.findMany(),
+        this.prisma.minionType.findMany(),
+      ]);
+    return {
+      keyword,
+      rarity,
+      cardType,
+      minionType,
+    };
   }
 }

@@ -21,7 +21,7 @@ export class HearthstoneController {
   constructor(private hsService: HearthstoneService) {}
 
   @Get('cards')
-  async showCards(@Query() query): Promise<object> {
+  async getCards(@Query() query): Promise<object> {
     const { page, name, cardClass, cardType, mode } = query;
     return this.hsService.getCards(
       page,
@@ -34,7 +34,7 @@ export class HearthstoneController {
   }
 
   @Get('decks')
-  async showDecksPage(@Query('page') page) {
+  async getDecksPage(@Query('page') page) {
     const result = await this.hsService.getDeckPagination(
       page ? Number(page) : 1,
       16,
@@ -57,7 +57,7 @@ export class HearthstoneController {
   }
 
   @Get('deck/:id')
-  async showDeck(@Param('id') id): Promise<object> {
+  async getDeck(@Param('id') id): Promise<object> {
     return await this.hsService.getDeck(parseInt(id));
   }
 
@@ -87,7 +87,9 @@ export class HearthstoneController {
   }
 
   @Get('metadata')
-  async saveMetadata(): Promise<void> {}
+  async saveMetadata(): Promise<any> {
+    return this.hsService.getProperties();
+  }
 
   @Get('classes')
   async getAllHsClasses() {
