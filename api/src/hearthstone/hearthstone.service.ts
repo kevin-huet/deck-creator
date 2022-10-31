@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { BlizzardApi } from 'blizzard-api-sample';
 import { encode, decode, FormatType, DeckDefinition } from 'deckstrings';
+import { SearchCardDto } from './dto/card.dto';
 
 type PropertiesType = {
   keyword: Keyword[];
@@ -32,34 +33,41 @@ export class HearthstoneService {
     return this.prisma.card.findMany();
   }
 
-  async getCards(
-    page: number,
-    nbPerPage: number,
-    setGroupSlug?: string,
-    name?: string,
-    cardClassSlug?: string,
-    cardType?: number,
-    manaCost?: number,
-  ): Promise<object> {
-    console.log(setGroupSlug);
+  async getCards(search: SearchCardDto): Promise<object> {
     const optionalSearch = {
-      ...(cardType && { cardTypeId: cardType }),
-      ...(manaCost && { manaCost: manaCost }),
+      ...(search.manaCost >= 0 && { manaCost: Number(search.manaCost) }),
+      ...(search.minionType && {
+        minionType: {
+          slug: search.minionType,
+        },
+      }),
+      ...(search.cardType && {
+        cardType: {
+          slug: search.cardType,
+        },
+      }),
+      ...(search.rarity && {
+        rarity: {
+          slug: search.rarity,
+        },
+      }),
     };
-    const hsClass = await this.prisma.hsClass.findUnique({
-      where: { slug: cardClassSlug },
-    });
+    const hsClass = search.cardClass
+      ? await this.prisma.hsClass.findUnique({
+          where: { slug: search.cardClass },
+        })
+      : undefined;
     const filters = {
       cardSet: {
         setGroupCards: {
           some: {
-            setGroupSlug: setGroupSlug ? setGroupSlug : 'standard',
+            setGroupSlug: search.setGroup ? search.setGroup : 'standard',
           },
         },
       },
       AND: [
         {
-          OR: [{ hsClassId: 12 }, { hsClassId: hsClass?.blizzard_id }],
+          OR: [{ hsClassId: hsClass?.blizzard_id }, { hsClassId: 12 }],
         },
         {
           OR: [
@@ -86,13 +94,15 @@ export class HearthstoneService {
     };
     const [cards, count] = await this.prisma.$transaction([
       this.prisma.card.findMany({
+        distinct: ['name'],
         where: {
-          ...(name && {
+          ...(search.name?.length > 0 && {
             name: {
-              contains: name,
+              contains: search.name,
               mode: 'insensitive',
             },
           }),
+          ...optionalSearch,
           ...filters,
         },
         include: {
@@ -112,18 +122,19 @@ export class HearthstoneService {
           hsClass: true,
           cardSet: true,
         },
-        skip: nbPerPage * (page - 1),
-        take: nbPerPage,
+        skip: search.nbPerPage * (search.page - 1),
+        take: search.nbPerPage,
         orderBy: [{ manaCost: 'asc' }, { rarityId: 'asc' }, { name: 'asc' }],
       }),
       this.prisma.card.count({
         where: {
-          ...(name && {
+          ...(search.name && {
             name: {
-              contains: name,
+              contains: search.name,
               mode: 'insensitive',
             },
           }),
+          ...optionalSearch,
           ...filters,
         },
       }),

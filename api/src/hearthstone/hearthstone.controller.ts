@@ -22,15 +22,7 @@ export class HearthstoneController {
 
   @Get('cards')
   async getCards(@Query() query): Promise<object> {
-    const { page, name, cardClass, cardType, mode } = query;
-    return this.hsService.getCards(
-      page,
-      36,
-      mode,
-      name,
-      cardClass,
-      cardType ? Number(cardType) : null,
-    );
+    return this.hsService.getCards({ ...query, nbPerPage: 36 });
   }
 
   @Get('decks')
@@ -45,8 +37,6 @@ export class HearthstoneController {
 
   @Post('encode')
   async generateDeckCode(@Body('classSlug') classSlug, @Body('cards') cards) {
-    console.log(classSlug);
-    console.log(cards);
     if (!classSlug) {
       throw new HttpException(
         'classId must be defined',
@@ -88,7 +78,7 @@ export class HearthstoneController {
 
   @Get('metadata')
   async saveMetadata(): Promise<any> {
-    return this.hsService.getProperties();
+    return { metadata: await this.hsService.getProperties() };
   }
 
   @Get('classes')
