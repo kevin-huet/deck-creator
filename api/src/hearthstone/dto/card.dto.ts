@@ -6,3 +6,15 @@ export interface CardDto {
   nb?: number;
   classId?: number;
 }
+
+export interface SearchCardDto {
+  page: number;
+  nbPerPage: number;
+  setGroup?: string;
+  name?: string;
+  cardClass?: string;
+  cardType?: string;
+  manaCost?: number;
+  minionType?: string;
+  rarity?: string;
+}
