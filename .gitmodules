@@ -4,3 +4,6 @@
 [submodule "mailing-service"]
 	path = mailing-service
 	url = https://github.com/kevin-huet/mailing-service.git
+[submodule "auth-service"]
+	path = auth-service
+	url = https://github.com/kevin-huet/auth-service.git
