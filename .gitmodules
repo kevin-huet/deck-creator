@@ -1,3 +1,6 @@
 [submodule "logger-service"]
 	path = logger-service
 	url = https://github.com/kevin-huet/logger-service.git
+[submodule "mailing-service"]
+	path = mailing-service
+	url = https://github.com/kevin-huet/mailing-service.git
