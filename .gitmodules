@@ -7,3 +7,6 @@
 [submodule "auth-service"]
 	path = auth-service
 	url = https://github.com/kevin-huet/auth-service.git
+[submodule "storage-service"]
+	path = storage-service
+	url = https://github.com/kevin-huet/storage-service.git
