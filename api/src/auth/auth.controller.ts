@@ -17,18 +17,24 @@ import { Response } from 'express';
 import * as dayjs from 'dayjs';
 import { RealIP } from 'nestjs-real-ip';
 import { AuthGuard } from '@nestjs/passport';
+import { RegisterRequestDTO, VerificationCodeRequestDTO } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
-  async login(@RealIP() ip, @Body() body, @Res() res: Response) {
-    const { jwt, user } = await this.authService.login(body, ip);
-    res.cookie('Authentication', jwt, {
-      expires: dayjs().add(7, 'days').toDate(),
-    });
-    return res.status(200).json({ user: user });
+  async login(
+    @RealIP() ip,
+    @Body() body,
+    @Res() res: Response,
+  ): Promise<object> {
+    const result = await this.authService.login(body);
+    if (!result.data.jwt) {
+      throw new HttpException(result.error, HttpStatus.FORBIDDEN);
+    }
+    res.cookie(process.env.JWT_COOKIE_NAME, result.data.jwt);
+    return res.status(200).json({});
   }
 
   @Get('logout')
@@ -40,35 +46,22 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Body() body: UserDto) {
-    const { username, email, password, terms, confirmPassword } = body;
-    if (confirmPassword !== password)
-      throw new HttpException(
-        'the two passwords are not identical',
-        HttpStatus.BAD_REQUEST,
-      );
-    await this.authService.createUser({ username, email, password, terms });
-    return { username, email };
+  async register(@Body() body: RegisterRequestDTO) {
+    return this.authService.register(body);
   }
 
   @Post('code')
-  async verificationCode(@Body() body) {
-    const result = await this.authService.verificationCode(
-      body.email,
-      body.code,
-    );
-    if (result.error)
-      throw new HttpException(result.message, HttpStatus.CONFLICT);
-    return result.message;
+  async verificationCode(@Body() body: VerificationCodeRequestDTO) {
+    return this.authService.verifyCode(body);
   }
 
   @Post('send_code')
-  async sendNewVerificationCode(@Body() body) {
+  async sendVerificationCode(@Body() body: { email: string }): Promise<object> {
     const result = await this.authService.sendVerificationCode(body.email);
     if (result.error) {
-      throw new HttpException(result.message, HttpStatus.CONFLICT);
+      throw new HttpException(result.error, HttpStatus.CONFLICT);
     }
-    return result.message;
+    return result.data;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -86,23 +79,9 @@ export class AuthController {
   @Get('discord/redirect')
   @UseGuards(AuthGuard('discord'))
   async discordAuthRedirect(@Req() req, @Res() res) {
-    console.log(req);
     if (!req.user) {
       return 'No user from discord';
     }
-    const { email, username, discriminator } = req.user;
-    const { user, status } = await this.authService.createSocialUser({
-      email,
-      username: username + discriminator,
-      socialLogin: 'DISCORD',
-    });
-    const jwt = this.authService.generateToken(user.id);
-    res.cookie('Authentication', jwt, {
-      expires: dayjs().add(7, 'days').toDate(),
-    });
-    if (status === EXISTED) {
-      return res.redirect('http://localhost:8000/');
-    }
-    return res.redirect('http://localhost:8000/');
+    //return res.redirect('http://localhost:8000/');
   }
 }

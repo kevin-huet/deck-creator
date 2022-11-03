@@ -2,7 +2,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { VerifyCallback, Strategy } from 'passport-discord';
 import { Profile } from 'passport';
-// change these to be your Discord client ID and secret
+
 const clientID = process.env.DISCORD_APP_ID;
 const clientSecret = process.env.DISCORD_APP_SECRET;
 const callbackURL = 'http://localhost:3000/auth/discord/redirect';
