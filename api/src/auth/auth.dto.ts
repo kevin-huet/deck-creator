@@ -1,16 +1,25 @@
 export class LoginRequestDTO {
   email: string;
   password: string;
+  captcha: string;
 }
 
 export class RegisterRequestDTO {
   email: string;
   username: string;
   password: string;
+  captcha: string;
+}
+
+export class UserDTO {
+  id: number;
+  username: string;
 }
 
 export class ValidateRequestDTO {
-  token: string;
+  user: UserDTO;
+  status: number;
+  error?: Array<string>;
 }
 
 export class ResponseDTO {

@@ -1,14 +1,10 @@
 import { Command, Positional } from 'nestjs-command';
 import { Injectable } from '@nestjs/common';
-import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UserCreateCommand {
-  constructor(
-    private userService: UserService,
-    private authService: AuthService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @Command({
     command: 'user:create',
@@ -30,15 +26,5 @@ export class UserCreateCommand {
       type: 'string',
     })
     password: string,
-  ) {
-    password = this.authService.encodePassword(password);
-    const result = await this.userService.createUser({
-      email,
-      username,
-      password,
-      terms: true,
-      verified: true,
-    });
-    console.log(result);
-  }
+  ) {}
 }

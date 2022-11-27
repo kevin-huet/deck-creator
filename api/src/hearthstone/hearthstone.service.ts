@@ -11,7 +11,7 @@ import {
 } from '@prisma/client';
 import { BlizzardApi } from 'blizzard-api-sample';
 import { encode, decode, FormatType, DeckDefinition } from 'deckstrings';
-import { SearchCardDto } from './dto/card.dto';
+import { CardDto, HeroClassDto, SearchCardDto } from './dto/card.dto';
 
 type PropertiesType = {
   keyword: Keyword[];
@@ -180,24 +180,59 @@ export class HearthstoneService {
   }
 
   async createDeck(
-    data: any,
+    data: {
+      cards: any;
+      hsClass: string;
+      modeSlug: string;
+      deck: { name: string; description: string };
+    },
     user: { email: string; id: number },
   ): Promise<Deck> {
+    if (data.modeSlug !== 'standard' && data.modeSlug !== 'wild') {
+      throw new HttpException('Invalid Game Mode', HttpStatus.BAD_REQUEST);
+    }
     const hsClass = await this.prisma.hsClass.findUnique({
-      where: { slug: data.classSlug },
+      where: { slug: data.hsClass },
     });
+    console.log(hsClass);
+    const transactionResult = await this.prisma.$transaction(
+      data.cards.map((card: CardDto) => {
+        if (card.nb > 2) {
+          throw new HttpException(
+            'there cannot be more than 2 the same card in a deck',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        return this.prisma.card.findFirst({
+          where: {
+            blizzard_id: card.blizzard_id,
+            slug: card.slug,
+            cardSet: {
+              setGroupCards: {
+                some: {
+                  setGroupSlug: card.setGroup ? card.setGroup : 'standard',
+                },
+              },
+            },
+            AND: [
+              {
+                OR: [{ hsClassId: hsClass?.blizzard_id }, { hsClassId: 12 }],
+              },
+            ],
+          },
+        });
+      }),
+    );
     let nbCards = 0;
-    const createCards = data.cards.map((card) => {
-      if (card.nb > 2)
-        throw new HttpException(
-          'there cannot be more than 2 the same card in a deck',
-          HttpStatus.BAD_REQUEST,
-        );
-      //if (card.classId !== 12 && card.classId !== hsClass.blizzard_id) {
-
-      nbCards += card.nb;
+    const createCards = transactionResult.map((card, index) => {
+      if (card.hsClassId !== 12 && card.hsClassId !== hsClass.blizzard_id) {
+        console.log(card.classId + ' ' + hsClass.heroCardId);
+        throw new HttpException('Invalid card Class', HttpStatus.BAD_REQUEST);
+      }
+      nbCards += data.cards[index].nb ? data.cards[index].nb : 1;
+      console.log(nbCards);
       return {
-        nb: card.nb,
+        nb: data.cards[index].nb,
         card: {
           connect: {
             blizzard_id: Number(card.blizzard_id),
@@ -207,7 +242,7 @@ export class HearthstoneService {
     });
     return this.prisma.deck.create({
       data: {
-        name: data.deckName,
+        name: data.deck.name,
         class: {
           connect: { blizzard_id: hsClass.blizzard_id },
         },
@@ -215,7 +250,7 @@ export class HearthstoneService {
         cards: {
           create: createCards,
         },
-        author: { connect: { id: user.id } },
+        authorId: user.id,
       },
     });
   }
@@ -230,19 +265,6 @@ export class HearthstoneService {
 
   async saveCards(params: Prisma.CardCreateManyInput) {
     await this.prisma.card.createMany({ data: params });
-  }
-
-  async saveDecks(params: Prisma.DeckCreateManyInput) {
-    await this.prisma.deck.create({
-      data: {
-        name: 'testAAA',
-        cards: {
-          create: {
-            card: { connect: { id: 1 } },
-          },
-        },
-      },
-    });
   }
 
   async getDeck(id: number) {
@@ -294,12 +316,8 @@ export class HearthstoneService {
         select: {
           id: true,
           name: true,
-          author: {
-            select: {
-              username: true,
-            },
-          },
           class: true,
+          description: true,
           cards: {
             select: {
               card: {

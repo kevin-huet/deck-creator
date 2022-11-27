@@ -1,32 +1,22 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UserModule } from '../user/user.module';
-import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './jwt.strategy';
-import { UserService } from '../user/user.service';
 import { PrismaService } from '../prisma.service';
-import { MailService } from '../mail/mail.service';
 import { DiscordStrategy } from './strategies/discord.stategy';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthProvider } from './providers/auth.provider';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [
-    UserModule,
-    PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '7d', algorithm: 'HS256' },
-    }),
-  ],
+  imports: [PassportModule, ConfigModule.forRoot(), HttpModule],
   controllers: [AuthController],
   providers: [
     AuthService,
-    UserService,
     PrismaService,
-    JwtStrategy,
     DiscordStrategy,
-    MailService,
+    ConfigService,
+    AuthProvider,
   ],
   exports: [AuthService],
 })

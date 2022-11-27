@@ -5,6 +5,14 @@ export interface CardDto {
   text: string;
   nb?: number;
   classId?: number;
+  setGroup?: string;
+}
+
+export interface HeroClassDto {
+  id: number;
+  slug: string;
+  name: string;
+  blizzard_id: number;
 }
 
 export interface SearchCardDto {

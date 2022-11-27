@@ -5,13 +5,11 @@ import {
   UseGuards,
   Request,
   Body,
-  HttpException,
-  HttpStatus,
   Res,
   Req,
 } from '@nestjs/common';
 import { AuthService, EXISTED } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UserDto } from '../user/dto/user.dto';
 import { Response } from 'express';
 import * as dayjs from 'dayjs';
@@ -30,11 +28,10 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<object> {
     const result = await this.authService.login(body);
-    if (!result.data.jwt) {
-      throw new HttpException(result.error, HttpStatus.FORBIDDEN);
-    }
-    res.cookie(process.env.JWT_COOKIE_NAME, result.data.jwt);
-    return res.status(200).json({});
+    res.cookie('Authentication', result.data.token);
+    return res.status(200).json({
+      ...result.data.user,
+    });
   }
 
   @Get('logout')
@@ -58,10 +55,7 @@ export class AuthController {
   @Post('send_code')
   async sendVerificationCode(@Body() body: { email: string }): Promise<object> {
     const result = await this.authService.sendVerificationCode(body.email);
-    if (result.error) {
-      throw new HttpException(result.error, HttpStatus.CONFLICT);
-    }
-    return result.data;
+    return result?.data;
   }
 
   @UseGuards(JwtAuthGuard)

@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { HearthstoneService } from './hearthstone.service';
 import { Deck as DeckModel, Card as CardModel } from '@prisma/client';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('hearthstone')
 export class HearthstoneController {

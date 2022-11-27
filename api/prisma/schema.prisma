@@ -1,11 +1,7 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-enum Social {
-  GOOGLE
-  APPLE
-  TWITTER
-  DISCORD
+generator dbml {
+  provider = "prisma-dbml-generator"
 }
 
 generator client {
@@ -17,37 +13,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Roles {
-    ADMIN
-    MODERATOR
-    USER
-}
-
-model User {
+model Comment {
   id                        Int             @default(autoincrement()) @id
-  decks                     Deck[]
-  email                     String          @unique
-  username                  String?         @unique
-  password                  String?
-  createdAt                 DateTime        @default(now())
-  updatedAt                 DateTime        @default(now())
-  lastLoginAt               DateTime?
-  IPsLogged                 String[]
-  terms                     Boolean         @default(false)
-  verified                  Boolean         @default(false)
-  verificationCode          String          @default("")
-  socialLogin               Social?
+  text                      String
+  deck                      Deck            @relation(fields: [deckId], references: [id])
+  deckId                    Int
+  authorId                  Int
 }
 
 model Deck {
   id                        Int             @default(autoincrement()) @id
   name                      String
-  author                    User?           @relation(fields: [authorId], references: [id])
+  description               String          @default("")
   class                     HsClass?        @relation(fields: [classId], references: [blizzard_id])
   cards                     CardOnDeck[]
   nbCards                   Int             @default(0)
-  authorId Int?
-  classId Int?
+  isPublic                  Boolean         @default(true)
+  comments                  Comment[]
+  authorId Int
+  classId Int
+
 }
 
 model CardOnDeck {
@@ -216,11 +201,11 @@ model SpellSchool {
 }
 
 model MultiClassCard {
-      id                    Int             @default(autoincrement()) @id
-      hsClass               HsClass         @relation(fields: [hsClassId], references: [blizzard_id])
-      card                  Card            @relation(fields: [cardId], references: [blizzard_id])
-      hsClassId             Int
-      cardId                Int
+  id                        Int             @default(autoincrement()) @id
+  hsClass                   HsClass         @relation(fields: [hsClassId], references: [blizzard_id])
+  card                      Card            @relation(fields: [cardId], references: [blizzard_id])
+  hsClassId                 Int
+  cardId                    Int
 }
 
 model HsClass {
