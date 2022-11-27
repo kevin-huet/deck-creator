@@ -1,0 +1,242 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Deck {
+  id Int [pk, increment]
+  name String [not null]
+  description String [not null, default: '']
+  class HsClass
+  cards CardOnDeck [not null]
+  nbCards Int [not null, default: 0]
+  isPublic Boolean [not null, default: true]
+  authorId Int [not null]
+  classId Int [not null]
+}
+
+Table CardOnDeck {
+  id Int [pk, increment]
+  deck Deck [not null]
+  card Card [not null]
+  nb Int [not null, default: 1]
+  deckId Int [not null]
+  cardId Int [not null]
+}
+
+Table Card {
+  id Int [pk, increment]
+  blizzard_id Int [unique]
+  hsClass HsClass
+  cardType CardType
+  minionType MinionType
+  cardSet CardSet
+  rarity Rarity
+  spellSchool SpellSchool
+  multiHsClass MultiClassCard [not null]
+  gameModeCards GameModeCard [not null]
+  keywordCards KeywordCard [not null]
+  decks CardOnDeck [not null]
+  artistName String
+  health Int
+  attack Int
+  manaCost Int
+  name String [not null]
+  text String
+  image String
+  slug String [unique, not null]
+  imageGold String
+  flavorText String
+  cropImage String
+  heroCardClassId Int
+  powerCardClassId Int
+  cardSetId Int
+  rarityId Int
+  hsClassId Int
+  cardTypeId Int
+  minionTypeId Int
+  spellSchoolId Int
+}
+
+Table GameModeCard {
+  id Int [pk, increment]
+  gameMode GameMode [not null]
+  card Card [not null]
+  gameModeId Int [not null]
+  cardId Int [not null]
+}
+
+Table KeywordCard {
+  id Int [pk, increment]
+  keyword Keyword [not null]
+  card Card [not null]
+  keywordId Int [not null]
+  cardId Int [not null]
+}
+
+Table Keyword {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null, default: '']
+  slug String [unique, not null]
+  keywordCards KeywordCard [not null]
+  text String [not null]
+  refText String [not null]
+}
+
+Table CardType {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null]
+  slug String [not null]
+  gameModes GameModeCardType [not null]
+  cards Card [not null]
+}
+
+Table GameMode {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  slug String [not null]
+  name String [not null]
+  gameModeCards GameModeCard [not null]
+  cardTypes GameModeCardType [not null]
+  minionTypes GameModeMinionType [not null]
+}
+
+Table Rarity {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null]
+  slug String [not null]
+  craftingCost Int[] [not null]
+  dustValue Int[] [not null]
+  cards Card [not null]
+}
+
+Table SetGroup {
+  id Int [pk, increment]
+  name String [not null]
+  slug String [unique, not null]
+  setGroupCards SetGroupCard [not null]
+  year Int
+  svg String
+  standard Boolean
+  icon String
+}
+
+Table SetGroupCard {
+  id Int [pk, increment]
+  setGroup SetGroup [not null]
+  cardSet CardSet [not null]
+  setGroupSlug String [not null]
+  cardSetSlug String [not null]
+}
+
+Table CardSet {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null]
+  slug String [unique, not null]
+  type String [not null]
+  setGroupCards SetGroupCard [not null]
+  collectibleCount Int [not null]
+  collectibleRevealedCount Int [not null]
+  nonCollectibleCount Int [not null]
+  nonCollectibleRevealedCount Int [not null]
+  cards Card [not null]
+}
+
+Table MinionType {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null]
+  slug String [unique, not null]
+  cards Card [not null]
+  gameModes GameModeMinionType [not null]
+}
+
+Table GameModeCardType {
+  id Int [pk, increment]
+  gamemode GameMode [not null]
+  cardType CardType [not null]
+  gameModeId Int [not null]
+  cardTypeId Int [not null]
+}
+
+Table GameModeMinionType {
+  id Int [pk, increment]
+  gamemode GameMode [not null]
+  minionType MinionType [not null]
+  gameModeId Int [not null]
+  minionTypeId Int [not null]
+}
+
+Table SpellSchool {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null]
+  slug String [unique, not null]
+  cards Card [not null]
+}
+
+Table MultiClassCard {
+  id Int [pk, increment]
+  hsClass HsClass [not null]
+  card Card [not null]
+  hsClassId Int [not null]
+  cardId Int [not null]
+}
+
+Table HsClass {
+  id Int [pk, increment]
+  blizzard_id Int [unique, not null]
+  name String [not null]
+  slug String [unique, not null]
+  cards Card [not null]
+  decks Deck [not null]
+  multiClassCards MultiClassCard [not null]
+  powerCardId Int
+  heroCardId Int
+  alternateHeroCardIds Int[] [not null]
+}
+
+Ref: Deck.classId > HsClass.blizzard_id
+
+Ref: CardOnDeck.deckId > Deck.id
+
+Ref: CardOnDeck.cardId > Card.blizzard_id
+
+Ref: Card.hsClassId > HsClass.blizzard_id
+
+Ref: Card.cardTypeId > CardType.blizzard_id
+
+Ref: Card.minionTypeId > MinionType.blizzard_id
+
+Ref: Card.cardSetId > CardSet.blizzard_id
+
+Ref: Card.rarityId > Rarity.blizzard_id
+
+Ref: Card.spellSchoolId > SpellSchool.blizzard_id
+
+Ref: GameModeCard.gameModeId > GameMode.blizzard_id
+
+Ref: GameModeCard.cardId > Card.blizzard_id
+
+Ref: KeywordCard.keywordId > Keyword.blizzard_id
+
+Ref: KeywordCard.cardId > Card.blizzard_id
+
+Ref: SetGroupCard.setGroupSlug > SetGroup.slug
+
+Ref: SetGroupCard.cardSetSlug > CardSet.slug
+
+Ref: GameModeCardType.gameModeId > GameMode.blizzard_id
+
+Ref: GameModeCardType.cardTypeId > CardType.blizzard_id
+
+Ref: GameModeMinionType.gameModeId > GameMode.blizzard_id
+
+Ref: GameModeMinionType.minionTypeId > MinionType.blizzard_id
+
+Ref: MultiClassCard.hsClassId > HsClass.blizzard_id
+
+Ref: MultiClassCard.cardId > Card.blizzard_id

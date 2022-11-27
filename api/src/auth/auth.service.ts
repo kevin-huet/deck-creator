@@ -1,16 +1,14 @@
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
-import * as bcrypt from 'bcryptjs';
-import { User as UserModel } from 'prisma';
-import { Prisma } from '@prisma/client';
-import { MailService } from '../mail/mail.service';
-import { PrismaService } from '../prisma.service';
+  LoginRequestDTO,
+  RegisterRequestDTO,
+  ResponseDTO,
+  VerificationCodeRequestDTO,
+} from './auth.dto';
+import jwt_decode from 'jwt-decode';
+import axios from 'axios';
+import { HttpService } from '@nestjs/axios';
 
 export const CREATED = 1;
 export const EXISTED = 2;
@@ -18,142 +16,70 @@ export const EXISTED = 2;
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UserService,
-    private mailService: MailService,
-    private jwt: JwtService,
-    private prisma: PrismaService,
+    @Inject('AUTH_SERVICE') private client: ClientProxy,
+    private readonly httpService: HttpService,
   ) {}
 
-  public async createSocialUser(data: Prisma.UserCreateInput) {
-    let user = await this.usersService.findOne({ email: data.email });
-    let status = EXISTED;
-    if (!user) {
-      user = await this.usersService.createSocialUser(data);
-      status = CREATED;
+  public async register(body: RegisterRequestDTO): Promise<ResponseDTO> {
+    const result = await this.client.send('REGISTER', { ...body }).toPromise();
+    if (result?.status !== HttpStatus.OK) {
+      throw new HttpException(result?.error, result?.status);
     }
-    return { user: user, status: status };
+    return;
   }
 
-  public async createUser(data: Prisma.UserCreateInput) {
-    data.password = this.encodePassword(data.password);
-    try {
-      const user = await this.usersService.createUser(data);
-      await this.mailService.sendUserConfirmation(user);
-      return user;
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new HttpException(
-          'Username or email already exist.',
-          HttpStatus.CONFLICT,
-        );
-      }
-      throw new HttpException('Problem with mailer', HttpStatus.BAD_GATEWAY);
-    }
+  public async captchaIsValid(captcha: string) {
+    const result = await this.httpService
+      .post(
+        `https://www.google.com/recaptcha/api/siteverify?secret=6LelcPkiAAAAAI5c1kDZCjiNX-kVdK1dn9_ahlUo&response=${captcha}`,
+      )
+      .toPromise();
+    return !!result.data?.success;
   }
 
-  public async login(
-    body: { email: string; password: string },
-    ip: string,
-  ): Promise<any> {
-    const { email, password } = body;
-    const user: UserModel = await this.usersService.findOne({ email });
-    if (!user) {
-      throw new HttpException('No user found', HttpStatus.UNAUTHORIZED);
-    }
-    const isPasswordValid: boolean = this.isPasswordValid(
-      password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        ...(!user.IPsLogged.includes(ip) && {
-          IPsLogged: {
-            push: ip,
-          },
-        }),
-      },
-    });
-    const jwt = this.generateToken(user.id);
-    user.password = undefined;
-    user.verificationCode = undefined;
-    return { jwt: jwt, user: user };
-  }
-
-  public async verificationCode(email: string, code: string) {
-    const user = await this.usersService.findOne({ email });
-
-    if (!user) return { error: true, message: 'email not exist in database' };
-    if (user.verified) return { error: true, message: 'User already verified' };
-    if (user.verificationCode !== code)
-      return { error: true, message: 'Invalid code' };
-    await this.usersService.updateUser({
-      where: { id: user.id },
-      data: { verified: true },
-    });
-    return { error: false, message: 'User has been verified' };
-  }
-
-  public async refresh(user: UserModel): Promise<string> {
-    //this.repository.update(user.id, { lastLoginAt: new Date() });
-
-    return this.generateToken(user);
-  }
-
-  // Decoding the JWT Token
-  public async decode(token: string): Promise<unknown> {
-    return this.jwt.decode(token, null);
-  }
-
-  // Get User by User ID we get from decode()
-  public async validateUser(decoded: any): Promise<UserModel> {
-    return this.usersService.findOne({ id: decoded.id });
-  }
-
-  // Generate JWT Token
-  public generateToken(id: number): string {
-    return this.jwt.sign({ id });
-  }
-
-  // Validate User's password
-  public isPasswordValid(password: string, userPassword: string): boolean {
-    return bcrypt.compareSync(password, userPassword);
-  }
-
-  // Encode User's password
-  public encodePassword(password: string): string {
-    const salt: string = bcrypt.genSaltSync(10);
-
-    return bcrypt.hashSync(password, salt);
-  }
-
-  // Validate JWT Token, throw forbidden error if JWT Token is invalid
-  private async validate(token: string): Promise<boolean | never> {
-    const decoded: unknown = this.jwt.verify(token);
-
-    if (!decoded) {
-      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+  public async login(body: LoginRequestDTO): Promise<ResponseDTO> {
+    console.log(body);
+    if (!(await this.captchaIsValid(body.captcha))) {
+      throw new HttpException('Invalid Captcha', HttpStatus.BAD_REQUEST);
     }
 
-    const user: UserModel = await this.validateUser(decoded);
-
-    if (!user) {
-      throw new UnauthorizedException();
+    const result = await this.client.send('LOGIN', { ...body }).toPromise();
+    if (result?.status !== HttpStatus.OK) {
+      throw new HttpException(result?.error, result?.status);
     }
-
-    return true;
+    if (!result?.token) {
+      throw new HttpException('Token not created', HttpStatus.BAD_GATEWAY);
+    }
+    const user = jwt_decode(result?.token);
+    return {
+      status: HttpStatus.OK,
+      data: { token: result?.token, user: user },
+    };
   }
 
-  public async sendVerificationCode(email: string) {
-    const user = await this.usersService.findOne({ email });
+  public async verifyCode(
+    body: VerificationCodeRequestDTO,
+  ): Promise<ResponseDTO> {
+    const result = await this.client
+      .send('VERIFY_CODE', { ...body })
+      .toPromise();
+    if (result?.status !== HttpStatus.OK) {
+      throw new HttpException(result?.error, result?.status);
+    }
+    return;
+  }
 
-    if (!user) return { error: true, message: 'User not exist' };
-    if (user.verified) return { error: true, message: 'User already verified' };
-    await this.mailService.sendUserConfirmation(user);
-    return { error: false, message: 'code send' };
+  async sendVerificationCode(email: string): Promise<ResponseDTO> {
+    const result = await this.client
+      .send('SEND_ANOTHER_VERIFICATION_CODE', { email })
+      .toPromise();
+    if (result?.status !== HttpStatus.OK) {
+      throw new HttpException(result?.error, result?.status);
+    }
+    return;
+  }
+
+  async validate(token: string) {
+    return this.client.send('VALIDATE', { token }).toPromise();
   }
 }

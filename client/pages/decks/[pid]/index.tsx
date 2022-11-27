@@ -39,9 +39,7 @@ import { customStyles } from "../../../themes/styles";
 import { AuthContext } from "../../../lib/providers/auth.provider";
 import { useForm } from "@mantine/form";
 
-const NewDeck: NextPage = ({ metadata }: any) => {
-  const router = useRouter();
-  const { heroClass, mode } = router.query;
+const Deck: NextPage = ({ deck }: any) => {
   const { auth } = useContext(AuthContext);
   const [code, setCode] = useState("");
   const [cards, setCards] = useState([]);
@@ -68,32 +66,23 @@ const NewDeck: NextPage = ({ metadata }: any) => {
     });
   };
   useEffect(() => {
-    if (heroClass && activePage > 0) {
-      setGameMode(String(mode));
-      setHsClass(String(heroClass));
-      search(lastSearchValues);
-    }
-  }, [activePage, heroClass, mode, searchCard]);
+    console.log(deck);
+    setDeckCards(deck.cards);
+  }, []);
   return (
     <>
       <Head>
-        <title>Decks</title>
+        <title>Deck - {deck.name}</title>
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
       <Container size="xl">
         <Card className={classes.themeBackgroundColor} radius={25}>
           <Card.Section withBorder={true} inheritPadding py="xs">
             <Text align={"center"} weight={500}>
-              Review pictures
+              Deck - {deck.name}
             </Text>
           </Card.Section>
-          <Card.Section withBorder={true} inheritPadding py="xs">
-            <SearchCardForm
-              searchCallback={search}
-              metadata={metadata}
-              setPage={setPage}
-            />
-          </Card.Section>
+          <Card.Section withBorder={true} inheritPadding py="xs"></Card.Section>
           <Card.Section p="xs">
             <Grid>
               <Col span={9}>
@@ -256,10 +245,10 @@ const CreateDeckModal = forwardRef(
   }
 );
 
-NewDeck.getInitialProps = () => {
-  return fetch("http://localhost:8000/api/hearthstone/metadata").then((res) =>
-    res.json()
+Deck.getInitialProps = ({ query }) => {
+  return fetch(`http://localhost:8000/api/hearthstone/deck/${query.pid}`).then(
+    (res) => res.json()
   );
 };
 
-export default NewDeck;
+export default Deck;

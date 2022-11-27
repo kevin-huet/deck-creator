@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { ActionIcon, Col, Grid, Select, TextInput } from "@mantine/core";
 import { IconSearch } from "@tabler/icons";
+import { useForm } from "@mantine/form";
 
-export const SearchCardForm = ({ metadata, searchCallback, form }: any) => {
+export const SearchCardForm = ({ metadata, searchCallback }: any) => {
   const items: any = Array.from({ length: 11 }, (_, index) => ({
     label: `${index} Mana`,
     value: index,
@@ -23,6 +24,17 @@ export const SearchCardForm = ({ metadata, searchCallback, form }: any) => {
     label: item.name,
     value: item.slug,
   }));
+  const form = useForm({
+    initialValues: {
+      name: "",
+      cost: -1,
+      rarity: "",
+      keyword: "",
+      cardType: "",
+      minionType: "",
+    },
+    validate: {},
+  });
   useEffect(() => {});
   return (
     <>
