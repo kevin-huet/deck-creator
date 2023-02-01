@@ -7,6 +7,7 @@ import { DiscordStrategy } from './strategies/discord.stategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthProvider } from './providers/auth.provider';
 import { HttpModule } from '@nestjs/axios';
+import { StorageProvider } from './providers/storage.provider';
 
 @Module({
   imports: [PassportModule, ConfigModule.forRoot(), HttpModule],
@@ -17,6 +18,7 @@ import { HttpModule } from '@nestjs/axios';
     DiscordStrategy,
     ConfigService,
     AuthProvider,
+    StorageProvider,
   ],
   exports: [AuthService],
 })

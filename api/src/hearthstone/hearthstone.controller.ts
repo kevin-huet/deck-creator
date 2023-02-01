@@ -13,8 +13,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { HearthstoneService } from './hearthstone.service';
-import { Deck as DeckModel, Card as CardModel } from '@prisma/client';
+import { Card as CardModel, Deck as DeckModel } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { hearthstoneConfig } from '../app.config';
 
 @Controller('hearthstone')
 export class HearthstoneController {
@@ -26,13 +27,13 @@ export class HearthstoneController {
   }
 
   @Get('decks')
-  async getDecksPage(@Query('page') page) {
-    const result = await this.hsService.getDeckPagination(
-      page ? Number(page) : 1,
-      16,
+  async getDecksPage(@Query() query) {
+    return await this.hsService.getDeckPagination(
+      query.page ? Number(query.page) : 1,
+      query.nbPerPage
+        ? Number(query.nbPerPage)
+        : hearthstoneConfig().search_decks_default_nb,
     );
-    console.log(result);
-    return result;
   }
 
   @Post('encode')
@@ -60,7 +61,6 @@ export class HearthstoneController {
   @UseGuards(JwtAuthGuard)
   @Put('deck/cards')
   async addCardIntoDeck(@Req() req, @Body() body): Promise<void> {
-    console.log(req.user);
     return await this.hsService.addCardToDeck(Number(body.deckId), body.cards);
   }
 
@@ -72,8 +72,8 @@ export class HearthstoneController {
 
   @UseGuards(JwtAuthGuard)
   @Delete('deck/:id')
-  async deleteDeck(): Promise<DeckModel> {
-    return;
+  async deleteDeck(@Req() req, @Query('id') id): Promise<void> {
+    await this.hsService.deleteDeck(id, req.user);
   }
 
   @Get('metadata')
@@ -84,5 +84,10 @@ export class HearthstoneController {
   @Get('classes')
   async getAllHsClasses() {
     return { classes: await this.hsService.getClasses() };
+  }
+
+  @Get('config')
+  async getConfig() {
+    return hearthstoneConfig();
   }
 }

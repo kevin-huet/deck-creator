@@ -1,21 +1,26 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
-  UseGuards,
-  Request,
-  Body,
-  Res,
+  Query,
   Req,
+  Request,
+  Res,
+  Patch,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { AuthService, EXISTED } from './auth.service';
+import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { UserDto } from '../user/dto/user.dto';
 import { Response } from 'express';
 import * as dayjs from 'dayjs';
 import { RealIP } from 'nestjs-real-ip';
 import { AuthGuard } from '@nestjs/passport';
 import { RegisterRequestDTO, VerificationCodeRequestDTO } from './auth.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Roles } from './decorator/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -32,6 +37,18 @@ export class AuthController {
     return res.status(200).json({
       ...result.data.user,
     });
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    await this.authService.upload(file);
+  }
+
+  @Get('upload')
+  async getFile(@Query() query) {
+    const result = await this.authService.getFile(query);
+    return result.image;
   }
 
   @Get('logout')
@@ -67,8 +84,11 @@ export class AuthController {
   }
 
   @Get('discord')
-  @UseGuards(AuthGuard('discord'))
-  async discordAuth(@Req() req) {}
+  async discordAuth(@Query('code') code) {
+    const result: any = await this.authService.getUserDiscord(code);
+    const user = await this.authService.getUser(result.data?.access_token);
+    console.log(user);
+  }
 
   @Get('discord/redirect')
   @UseGuards(AuthGuard('discord'))
@@ -76,6 +96,11 @@ export class AuthController {
     if (!req.user) {
       return 'No user from discord';
     }
-    //return res.redirect('http://localhost:8000/');
+    return res.redirect('http://localhost:8000/');
+  }
+
+  @Patch('user/images')
+  async changeImage(@Body() body) {
+    return '';
   }
 }

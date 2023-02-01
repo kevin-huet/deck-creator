@@ -12,6 +12,8 @@ import {
 import { BlizzardApi } from 'blizzard-api-sample';
 import { encode, decode, FormatType, DeckDefinition } from 'deckstrings';
 import { CardDto, HeroClassDto, SearchCardDto } from './dto/card.dto';
+import { UserDTO } from '../auth/auth.dto';
+import * as yaml from 'js-yaml';
 
 type PropertiesType = {
   keyword: Keyword[];
@@ -33,8 +35,8 @@ export class HearthstoneService {
     return this.prisma.card.findMany();
   }
 
-  async getCards(search: SearchCardDto): Promise<object> {
-    const optionalSearch = {
+  private static optionalSearch(search: any) {
+    return {
       ...(search.manaCost >= 0 && { manaCost: Number(search.manaCost) }),
       ...(search.minionType && {
         minionType: {
@@ -52,80 +54,19 @@ export class HearthstoneService {
         },
       }),
     };
+  }
+  async getCards(search: SearchCardDto): Promise<object> {
+    const optionalSearch = HearthstoneService.optionalSearch(search);
     const hsClass = search.cardClass
       ? await this.prisma.hsClass.findUnique({
           where: { slug: search.cardClass },
         })
       : undefined;
-    const filters = {
-      cardSet: {
-        setGroupCards: {
-          some: {
-            setGroupSlug: search.setGroup ? search.setGroup : 'standard',
-          },
-        },
-      },
-      AND: [
-        {
-          OR: [{ hsClassId: hsClass?.blizzard_id }, { hsClassId: 12 }],
-        },
-        {
-          OR: [
-            {
-              multiHsClass: {
-                none: {},
-              },
-            },
-            {
-              multiHsClass: {
-                some: {
-                  hsClassId: hsClass?.blizzard_id,
-                },
-              },
-            },
-          ],
-        },
-      ],
-      NOT: [
-        {
-          cardSet: null,
-        },
-      ],
-    };
+    const filters = HearthstoneService.getFilters(search, hsClass);
     const [cards, count] = await this.prisma.$transaction([
-      this.prisma.card.findMany({
-        distinct: ['name'],
-        where: {
-          ...(search.name?.length > 0 && {
-            name: {
-              contains: search.name,
-              mode: 'insensitive',
-            },
-          }),
-          ...optionalSearch,
-          ...filters,
-        },
-        include: {
-          multiHsClass: {
-            select: {
-              hsClass: {
-                select: {
-                  blizzard_id: true,
-                  name: true,
-                  slug: true,
-                },
-              },
-            },
-          },
-          rarity: true,
-          cardType: true,
-          hsClass: true,
-          cardSet: true,
-        },
-        skip: search.nbPerPage * (search.page - 1),
-        take: search.nbPerPage,
-        orderBy: [{ manaCost: 'asc' }, { rarityId: 'asc' }, { name: 'asc' }],
-      }),
+      this.prisma.card.findMany(
+        HearthstoneService.searchCardCondition(search, optionalSearch, filters),
+      ),
       this.prisma.card.count({
         where: {
           ...(search.name && {
@@ -175,8 +116,14 @@ export class HearthstoneService {
     ]);
   }
 
-  async deleteDeck(params: { id: number }) {
-    return this.prisma.deck.delete({ where: params });
+  async deleteDeck(deckId: number, user): Promise<Deck | void> {
+    if (
+      await this.prisma.deck.findFirst({
+        where: { id: deckId, authorId: user.id },
+      })
+    ) {
+      return this.prisma.deck.delete({ where: { id: deckId } });
+    }
   }
 
   async createDeck(
@@ -186,7 +133,7 @@ export class HearthstoneService {
       modeSlug: string;
       deck: { name: string; description: string };
     },
-    user: { email: string; id: number },
+    user: UserDTO,
   ): Promise<Deck> {
     if (data.modeSlug !== 'standard' && data.modeSlug !== 'wild') {
       throw new HttpException('Invalid Game Mode', HttpStatus.BAD_REQUEST);
@@ -355,6 +302,84 @@ export class HearthstoneService {
       rarity,
       cardType,
       minionType,
+    };
+  }
+
+  private static searchCardCondition(
+    search: SearchCardDto,
+    optionalSearch,
+    filters,
+  ): any {
+    return {
+      distinct: ['name'],
+      where: {
+        ...(search.name?.length > 0 && {
+          name: {
+            contains: search.name,
+            mode: 'insensitive',
+          },
+        }),
+        ...optionalSearch,
+        ...filters,
+      },
+      include: {
+        multiHsClass: {
+          select: {
+            hsClass: {
+              select: {
+                blizzard_id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        rarity: true,
+        cardType: true,
+        hsClass: true,
+        cardSet: true,
+      },
+      skip: search.nbPerPage * (search.page - 1),
+      take: search.nbPerPage,
+      orderBy: [{ manaCost: 'asc' }, { rarityId: 'asc' }, { name: 'asc' }],
+    };
+  }
+
+  private static getFilters(search: SearchCardDto, hsClass: any) {
+    return {
+      cardSet: {
+        setGroupCards: {
+          some: {
+            setGroupSlug: search.setGroup ? search.setGroup : 'standard',
+          },
+        },
+      },
+      AND: [
+        {
+          OR: [{ hsClassId: hsClass?.blizzard_id }, { hsClassId: 12 }],
+        },
+        {
+          OR: [
+            {
+              multiHsClass: {
+                none: {},
+              },
+            },
+            {
+              multiHsClass: {
+                some: {
+                  hsClassId: hsClass?.blizzard_id,
+                },
+              },
+            },
+          ],
+        },
+      ],
+      NOT: [
+        {
+          cardSet: null,
+        },
+      ],
     };
   }
 }
