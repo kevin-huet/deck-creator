@@ -10,3 +10,9 @@
 [submodule "storage-service"]
 	path = microservices/storage-service
 	url = https://github.com/kevin-huet/storage-service.git
+[submodule "microservices/--force"]
+	path = microservices/--force
+	url = git@github.com:kevin-huet/acm-service.git
+[submodule "microservices/acm-service"]
+	path = microservices/acm-service
+	url = git@github.com:kevin-huet/acm-service.git
